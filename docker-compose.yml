@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: postgres
+    environment:
+      POSTGRES_DB: insurance_app
+      POSTGRES_USER:  ${DB_USER}
+      POSTGRES_PASSWORD:  ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d insurance_app"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: insurance_app
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/insurance_app
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+
+
