@@ -7,7 +7,7 @@ import com.example.insurance_app.application.exception.ResourceNotFoundException
 import com.example.insurance_app.infrastructure.persistence.repository.geography.CityRepository;
 import com.example.insurance_app.infrastructure.persistence.repository.geography.CountryRepository;
 import com.example.insurance_app.infrastructure.persistence.repository.geography.CountyRepository;
-import com.example.insurance_app.webapi.mapper.GeographyMapper;
+import com.example.insurance_app.application.mapper.GeographyMapper;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;

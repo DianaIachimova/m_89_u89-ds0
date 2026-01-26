@@ -1,4 +1,4 @@
-package com.example.insurance_app.webapi.error.error;
+package com.example.insurance_app.webapi.error;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;

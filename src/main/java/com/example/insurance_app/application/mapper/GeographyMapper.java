@@ -1,4 +1,4 @@
-package com.example.insurance_app.webapi.mapper;
+package com.example.insurance_app.application.mapper;
 
 import com.example.insurance_app.application.dto.geogrophy.CityResponse;
 import com.example.insurance_app.application.dto.geogrophy.CountryResponse;
