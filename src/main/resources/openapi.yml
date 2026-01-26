@@ -1,0 +1,887 @@
+openapi: 3.0.3
+info:
+  title: Insurance App API
+  description: |
+    Backend API for Romanian insurance company managing building insurance policies.
+    
+    **Current Sprint:** Client and Building Management
+    
+    **User Roles:**
+    - Brokers: Manage clients and buildings
+    - Administrators: (Future sprint)
+  version: 0.0.1-SNAPSHOT
+  contact:
+    name: Endava Training
+    email: training@endava.com
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+  - url: http://localhost:8080
+    description: Docker environment
+
+tags:
+  - name: Clients
+    description: Client management operations for brokers
+  - name: Buildings
+    description: Building (insurance object) management operations
+  - name: Geography
+    description: Geographic data (countries, counties, cities)
+
+paths:
+  /api/brokers/clients:
+    get:
+      tags:
+        - Clients
+      summary: Search clients
+      description: Search clients by name and/or identification number with pagination
+      operationId: searchClients
+      parameters:
+        - name: name
+          in: query
+          description: Client name (partial match, case-insensitive)
+          required: false
+          schema:
+            type: string
+            example: "John"
+        - name: identificationNumber
+          in: query
+          description: CNP or CUI (exact match)
+          required: false
+          schema:
+            type: string
+            example: "1234567890123"
+        - name: page
+          in: query
+          description: Page number (0-indexed)
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: sort
+          in: query
+          description: Sort field and direction
+          required: false
+          schema:
+            type: string
+            default: "name,asc"
+            example: "name,asc"
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageDtoClientResponse'
+    
+    post:
+      tags:
+        - Clients
+      summary: Create new client
+      description: Create a new client (individual or company)
+      operationId: createClient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClientRequest'
+      responses:
+        '201':
+          description: Client created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '409':
+          description: Duplicate identification number
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/brokers/clients/{clientId}:
+    get:
+      tags:
+        - Clients
+      summary: Get client by ID
+      description: Retrieve client details including identification number change history
+      operationId: getClientById
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          description: Client UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientResponse'
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+    
+    put:
+      tags:
+        - Clients
+      summary: Update client
+      description: Update client information. Changes to identificationNumber are automatically tracked.
+      operationId: updateClient
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          description: Client UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateClientRequest'
+      responses:
+        '200':
+          description: Client updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '409':
+          description: Duplicate identification number
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/brokers/clients/{clientId}/buildings:
+    get:
+      tags:
+        - Buildings
+      summary: Get buildings by client
+      description: Retrieve all buildings owned by a specific client
+      operationId: getBuildingsByClient
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          description: Client UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BuildingResponse'
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+    
+    post:
+      tags:
+        - Buildings
+      summary: Create new building
+      description: Register a new building for a client
+      operationId: createBuilding
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          description: Owner client UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBuildingRequest'
+      responses:
+        '201':
+          description: Building created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildingResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Client or City not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/brokers/buildings/{buildingId}:
+    get:
+      tags:
+        - Buildings
+      summary: Get building by ID
+      description: Retrieve building details with full geography information
+      operationId: getBuildingById
+      parameters:
+        - name: buildingId
+          in: path
+          required: true
+          description: Building UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildingResponse'
+        '404':
+          description: Building not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+    
+    put:
+      tags:
+        - Buildings
+      summary: Update building
+      description: Update building information. Owner cannot be changed (immutable).
+      operationId: updateBuilding
+      parameters:
+        - name: buildingId
+          in: path
+          required: true
+          description: Building UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBuildingRequest'
+      responses:
+        '200':
+          description: Building updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildingResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Building or City not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/brokers/countries:
+    get:
+      tags:
+        - Geography
+      summary: Get all countries
+      description: Retrieve all countries ordered by name
+      operationId: getCountries
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CountryResponse'
+
+  /api/brokers/countries/{countryId}/counties:
+    get:
+      tags:
+        - Geography
+      summary: Get counties by country
+      description: Retrieve all counties for a specific country, ordered by name
+      operationId: getCountiesByCountry
+      parameters:
+        - name: countryId
+          in: path
+          required: true
+          description: Country UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CountyResponse'
+        '404':
+          description: Country not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/brokers/counties/{countyId}/cities:
+    get:
+      tags:
+        - Geography
+      summary: Get cities by county
+      description: Retrieve all cities for a specific county, ordered by name
+      operationId: getCitiesByCounty
+      parameters:
+        - name: countyId
+          in: path
+          required: true
+          description: County UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CityResponse'
+        '404':
+          description: County not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+components:
+  schemas:
+    # Client Schemas
+    CreateClientRequest:
+      type: object
+      required:
+        - clientType
+        - name
+        - identificationNumber
+        - contactInfo
+      properties:
+        clientType:
+          type: string
+          enum: [INDIVIDUAL, COMPANY]
+          description: Type of client
+          example: INDIVIDUAL
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          description: Client name or company name
+          example: "John Doe"
+        identificationNumber:
+          type: string
+          pattern: '^(?:\d{13}|\d{2,10})$'
+          description: CNP (13 digits) for individuals or CUI (2-10 digits) for companies
+          example: "1234567890123"
+        contactInfo:
+          $ref: '#/components/schemas/ContactInfoRequest'
+        address:
+          $ref: '#/components/schemas/AddressRequest'
+
+    UpdateClientRequest:
+      type: object
+      required:
+        - name
+        - contactInfo
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          description: Client name or company name
+          example: "Jane Doe"
+        identificationNumber:
+          type: string
+          pattern: '^[0-9]{13}$|^[0-9]{2,10}$'
+          description: New CNP or CUI (changes are tracked automatically)
+          example: "9876543210987"
+        contactInfo:
+          $ref: '#/components/schemas/ContactInfoRequest'
+        address:
+          $ref: '#/components/schemas/AddressRequest'
+
+    ContactInfoRequest:
+      type: object
+      required:
+        - email
+        - phone
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 100
+          description: Email address
+          example: "john.doe@example.com"
+        phone:
+          type: string
+          pattern: '^\+?[0-9]{10,15}$'
+          description: Phone number
+          example: "+40712345678"
+
+    AddressRequest:
+      type: object
+      required:
+        - street
+        - city
+        - country
+      properties:
+        street:
+          type: string
+          maxLength: 200
+          description: Street name
+          example: "Main Street"
+        city:
+          type: string
+          maxLength: 100
+          description: City name
+          example: "Bucharest"
+        county:
+          type: string
+          maxLength: 100
+          description: County name (optional)
+          example: "Bucuresti"
+        postalCode:
+          type: string
+          pattern: '^[0-9]{6}$'
+          description: 6-digit postal code (optional)
+          example: "123456"
+        country:
+          type: string
+          maxLength: 100
+          description: Country name
+          example: "Romania"
+
+    ClientResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Client unique identifier
+        clientType:
+          type: string
+          enum: [INDIVIDUAL, COMPANY]
+          description: Type of client
+        name:
+          type: string
+          description: Client name or company name
+        identificationNumber:
+          type: string
+          description: CNP or CUI
+        contactInfo:
+          $ref: '#/components/schemas/ContactInfoResponse'
+        address:
+          $ref: '#/components/schemas/AddressResponse'
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        identificationNumberHistory:
+          type: array
+          description: History of identification number changes
+          items:
+            $ref: '#/components/schemas/IdentificationNumberChangeDto'
+
+    ContactInfoResponse:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+
+    AddressResponse:
+      type: object
+      properties:
+        street:
+          type: string
+        city:
+          type: string
+        county:
+          type: string
+        postalCode:
+          type: string
+        country:
+          type: string
+
+    IdentificationNumberChangeDto:
+      type: object
+      properties:
+        changedAt:
+          type: string
+          format: date-time
+          description: When the change occurred
+        changedBy:
+          type: string
+          description: Who made the change
+        changeReason:
+          type: string
+          description: Reason for the change
+
+    PageDtoClientResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClientResponse'
+        page:
+          type: integer
+          description: Current page number (0-indexed)
+        size:
+          type: integer
+          description: Page size
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of elements
+        totalPages:
+          type: integer
+          description: Total number of pages
+
+    # Building Schemas
+    CreateBuildingRequest:
+      type: object
+      required:
+        - street
+        - streetNumber
+        - cityId
+        - constructionYear
+        - buildingType
+        - surfaceArea
+        - insuredValue
+      properties:
+        street:
+          type: string
+          maxLength: 200
+          description: Street name
+          example: "Main Street"
+        streetNumber:
+          type: string
+          maxLength: 20
+          description: Street number
+          example: "123"
+        cityId:
+          type: string
+          format: uuid
+          description: City UUID from geography
+          example: "f1d2c3b4-5a6b-4c8d-9e0f-112233445566"
+        constructionYear:
+          type: integer
+          minimum: 1800
+          maximum: 2100
+          description: Year of construction
+          example: 2020
+        buildingType:
+          type: string
+          enum: [RESIDENTIAL, OFFICE, INDUSTRIAL]
+          description: Type of building
+          example: RESIDENTIAL
+        numberOfFloors:
+          type: integer
+          minimum: 1
+          maximum: 200
+          description: Number of floors (optional)
+          example: 5
+        surfaceArea:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Surface area in square meters
+          example: 150.50
+        insuredValue:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Insured value in currency
+          example: 200000.00
+        floodZone:
+          type: boolean
+          description: Is building in flood risk zone
+          example: false
+        earthquakeRiskZone:
+          type: boolean
+          description: Is building in earthquake risk zone
+          example: true
+
+    UpdateBuildingRequest:
+      type: object
+      required:
+        - street
+        - streetNumber
+        - cityId
+        - constructionYear
+        - buildingType
+        - surfaceArea
+        - insuredValue
+      properties:
+        street:
+          type: string
+          maxLength: 200
+          description: Street name
+          example: "New Street"
+        streetNumber:
+          type: string
+          maxLength: 20
+          description: Street number
+          example: "456"
+        cityId:
+          type: string
+          format: uuid
+          description: City UUID from geography
+          example: "f1d2c3b4-5a6b-4c8d-9e0f-112233445566"
+        constructionYear:
+          type: integer
+          minimum: 1800
+          maximum: 2100
+          description: Year of construction
+          example: 2021
+        buildingType:
+          type: string
+          enum: [RESIDENTIAL, OFFICE, INDUSTRIAL]
+          description: Type of building
+          example: OFFICE
+        numberOfFloors:
+          type: integer
+          minimum: 1
+          maximum: 200
+          description: Number of floors (optional)
+          example: 10
+        surfaceArea:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Surface area in square meters
+          example: 300.00
+        insuredValue:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Insured value in currency
+          example: 500000.00
+        floodZone:
+          type: boolean
+          description: Is building in flood risk zone
+          example: true
+        earthquakeRiskZone:
+          type: boolean
+          description: Is building in earthquake risk zone
+          example: false
+
+    BuildingResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Building unique identifier
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner client UUID (immutable)
+        ownerName:
+          type: string
+          description: Owner client name
+        street:
+          type: string
+          description: Street name
+        streetNumber:
+          type: string
+          description: Street number
+        city:
+          $ref: '#/components/schemas/CityResponse'
+        county:
+          $ref: '#/components/schemas/CountyResponse'
+        country:
+          $ref: '#/components/schemas/CountryResponse'
+        constructionYear:
+          type: integer
+          description: Year of construction
+        buildingType:
+          type: string
+          enum: [RESIDENTIAL, OFFICE, INDUSTRIAL]
+          description: Type of building
+        numberOfFloors:
+          type: integer
+          description: Number of floors
+        surfaceArea:
+          type: number
+          format: double
+          description: Surface area in square meters
+        insuredValue:
+          type: number
+          format: double
+          description: Insured value in currency
+        floodZone:
+          type: boolean
+          description: Is building in flood risk zone
+        earthquakeRiskZone:
+          type: boolean
+          description: Is building in earthquake risk zone
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    # Geography Schemas
+    CountryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Country unique identifier
+        name:
+          type: string
+          description: Country name
+          example: "Romania"
+
+    CountyResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: County unique identifier
+        name:
+          type: string
+          description: County name
+          example: "Bucuresti"
+        code:
+          type: string
+          description: County code
+          example: "B"
+
+    CityResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: City unique identifier
+        name:
+          type: string
+          description: City name
+          example: "Sector 1"
+
+    # Error Schema (RFC 7807 Problem Details)
+    ProblemDetail:
+      type: object
+      properties:
+        type:
+          type: string
+          description: URI reference identifying the problem type
+          example: "urn:problem:validation-error"
+        title:
+          type: string
+          description: Short, human-readable summary
+          example: "Bad Request"
+        status:
+          type: integer
+          description: HTTP status code
+          example: 400
+        detail:
+          type: string
+          description: Human-readable explanation
+          example: "Validation failed"
+        instance:
+          type: string
+          description: URI reference identifying the specific occurrence
+          example: "/api/brokers/clients"
+        code:
+          type: string
+          description: Application-specific error code
+          example: "VALIDATION_ERROR"
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+          description: Field-level validation errors (for validation errors)
+          example:
+            name: "Name is required"
+            email: "Email must be valid"
+        resource:
+          type: string
+          description: Resource type (for not found errors)
+          example: "Client"
+        field:
+          type: string
+          description: Field name (for not found errors)
+          example: "id"
+        identificationNumber:
+          type: string
+          description: Conflicting identification number (for duplicate errors)
+          example: "1234567890123"
