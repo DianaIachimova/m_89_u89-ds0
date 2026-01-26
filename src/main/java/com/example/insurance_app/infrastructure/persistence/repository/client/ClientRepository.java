@@ -1,4 +1,4 @@
-package com.example.insurance_app.infrastructure.repository.client.client;
+package com.example.insurance_app.infrastructure.persistence.repository.client;
 
 import com.example.insurance_app.infrastructure.persistence.entity.client.ClientEntity;
 import org.springframework.data.domain.Page;
