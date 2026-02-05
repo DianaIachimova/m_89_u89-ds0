@@ -1,0 +1,39 @@
+stages:
+  - build
+  - test
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+  MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version --no-transfer-progress"
+  SPRING_PROFILES_ACTIVE: test
+
+default:
+  image: eclipse-temurin:21-jdk
+  cache:
+    key: "maven-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .m2/repository/
+
+build:
+  stage: build
+  script:
+    - ./mvnw $MAVEN_CLI_OPTS -DskipTests clean package
+  artifacts:
+    expire_in: 7 days
+    paths:
+      - target/*.jar
+
+test:
+  stage: test
+  script:
+    - ./mvnw $MAVEN_CLI_OPTS test
+  artifacts:
+    when: always
+    expire_in: 7 days
+    reports:
+      junit:
+        - target/surefire-reports/TEST-*.xml
+        - target/failsafe-reports/TEST-*.xml
+    paths:
+      - target/surefire-reports/
+      - target/failsafe-reports/
