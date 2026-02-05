@@ -1,7 +1,9 @@
 package com.example.insurance_app.domain.util;
 
 import com.example.insurance_app.domain.exception.DomainValidationException;
-import com.example.insurance_app.domain.model.ClientType;
+import com.example.insurance_app.domain.model.client.ClientType;
+
+import java.math.BigDecimal;
 
 
 public final class DomainAssertions {
@@ -55,5 +57,28 @@ public final class DomainAssertions {
         return v != null && v.matches("\\d{2,10}");
     }
 
+    public static void requireInRange(int value, int min, int max, String field) {
+        check(value >= min && value <= max, field + " must be between " + min + " and " + max);
+    }
+
+    public static void requireBigDecimalFormat(BigDecimal value, int integerDigits, int fractionDigits, String field) {
+        notNull(value, field);
+
+        int scale = value.scale();
+        int precision = value.precision();
+        int integerPart = precision - scale;
+
+        check(scale <= fractionDigits, field + " must have max " + fractionDigits + " decimals");
+        check(integerPart <= integerDigits, field + " must have max " + integerDigits + " integer digits");
+    }
+
+    public static void requirePositive(BigDecimal value, String field) {
+        check(value.compareTo(BigDecimal.ZERO) > 0, field+ "must be positive"
+        );
+    }
+
+
+
+    
 
 }
