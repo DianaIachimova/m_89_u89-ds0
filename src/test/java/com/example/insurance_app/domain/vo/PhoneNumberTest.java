@@ -1,7 +1,7 @@
 package com.example.insurance_app.domain.vo;
 
 import com.example.insurance_app.domain.exception.DomainValidationException;
-import com.example.insurance_app.domain.model.vo.PhoneNumber;
+import com.example.insurance_app.domain.model.client.vo.PhoneNumber;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

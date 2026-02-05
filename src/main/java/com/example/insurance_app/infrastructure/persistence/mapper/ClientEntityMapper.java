@@ -1,12 +1,12 @@
 package com.example.insurance_app.infrastructure.persistence.mapper;
 
-import com.example.insurance_app.domain.model.Address;
-import com.example.insurance_app.domain.model.Client;
-import com.example.insurance_app.domain.model.ClientType;
-import com.example.insurance_app.domain.model.ContactInfo;
-import com.example.insurance_app.domain.model.vo.ClientId;
-import com.example.insurance_app.domain.model.vo.EmailAddress;
-import com.example.insurance_app.domain.model.vo.PhoneNumber;
+import com.example.insurance_app.domain.model.client.Client;
+import com.example.insurance_app.domain.model.client.ClientType;
+import com.example.insurance_app.domain.model.client.ContactInfo;
+import com.example.insurance_app.domain.model.client.vo.Address;
+import com.example.insurance_app.domain.model.client.vo.ClientId;
+import com.example.insurance_app.domain.model.client.vo.EmailAddress;
+import com.example.insurance_app.domain.model.client.vo.PhoneNumber;
 import com.example.insurance_app.infrastructure.persistence.entity.client.AddressEmbeddable;
 import com.example.insurance_app.infrastructure.persistence.entity.client.ClientEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.client.ClientTypeEntity;
