@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    public static final String BAD_REQUEST = "Bad Request";
     Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(DomainException.class)
@@ -35,7 +36,7 @@ public class GlobalExceptionHandler {
                 ex.getStatus(),
                 ex.getType(),
                 ex.getTitle(),
-                ex.getDetail(),
+                ex.getDetail() + " "+ ex.getMessage(),
                 req.getRequestURI(),
                 ex.getCode(),
                 pdProps
@@ -95,7 +96,7 @@ public class GlobalExceptionHandler {
         return ProblemDetailsFactory.of(
                 HttpStatus.BAD_REQUEST,
                 ProblemTypes.VALIDATION_ERROR,
-                "Bad Request",
+                BAD_REQUEST,
                 "Validation failed",
                 req.getRequestURI(),
                 "VALIDATION_ERROR",
@@ -110,7 +111,7 @@ public class GlobalExceptionHandler {
         return ProblemDetailsFactory.of(
                 HttpStatus.BAD_REQUEST,
                 ProblemTypes.INVALID_PARAMETER,
-                "Bad Request",
+                BAD_REQUEST,
                 ex.getMessage(),
                 req.getRequestURI(),
                 "INVALID_ARGUMENT",
@@ -122,17 +123,20 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleInvalidPathParam(MethodArgumentTypeMismatchException ex, HttpServletRequest req) {
         logger.warn("Bad request method={} path={} error={}", req.getMethod(), req.getRequestURI(),
                 ex.getCause() !=null ? ex.getCause() : ex.getClass().getSimpleName());
+        var requiredType = ex.getRequiredType();
 
         return ProblemDetailsFactory.of(
                 HttpStatus.BAD_REQUEST,
                 ProblemTypes.INVALID_PARAMETER,
-                "Bad Request",
+                BAD_REQUEST,
                 "Invalid value for parameter '%s'".formatted(ex.getName()),
                 req.getRequestURI(),
                 "INVALID_PARAMETER",
                 Map.of(
                         "parameter", ex.getName(),
-                        "expectedType", ex.getRequiredType() !=null ? ex.getRequiredType().getSimpleName():"unknown"
+                        "expectedType",
+                        requiredType != null ? requiredType.getSimpleName() : "unknown"
+
                 )
         );
     }

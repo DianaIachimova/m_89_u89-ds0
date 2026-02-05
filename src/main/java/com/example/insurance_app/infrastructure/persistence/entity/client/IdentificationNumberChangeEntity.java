@@ -3,7 +3,6 @@ package com.example.insurance_app.infrastructure.persistence.entity.client;
 import jakarta.persistence.*;
 
 import java.time.Instant;
-import java.util.Objects;
 import java.util.UUID;
 
 @Entity
