@@ -1,18 +1,20 @@
 package com.example.insurance_app.service;
 
 import com.example.insurance_app.application.dto.building.BuildingTypeDto;
+import com.example.insurance_app.application.dto.building.RiskIndicatorsDto;
+import com.example.insurance_app.application.dto.building.request.AddressRequest;
+import com.example.insurance_app.application.dto.building.request.BuildingInfoRequest;
 import com.example.insurance_app.application.dto.building.request.CreateBuildingRequest;
 import com.example.insurance_app.application.dto.building.request.UpdateBuildingRequest;
-import com.example.insurance_app.application.dto.building.response.BuildingResponse;
+import com.example.insurance_app.application.dto.building.response.BuildingDetailedResponse;
+import com.example.insurance_app.application.dto.building.response.BuildingSummaryResponse;
 import com.example.insurance_app.application.exception.ResourceNotFoundException;
-import com.example.insurance_app.application.mapper.BuildingDtoMapper;
+import com.example.insurance_app.application.mapper.BuildingRequestMapper;
+import com.example.insurance_app.application.mapper.BuildingResponseMapper;
 import com.example.insurance_app.application.service.BuildingService;
-import com.example.insurance_app.domain.model.Building;
-import com.example.insurance_app.domain.model.BuildingType;
-import com.example.insurance_app.domain.model.vo.BuildingId;
-import com.example.insurance_app.domain.model.vo.ClientId;
+import com.example.insurance_app.domain.model.building.Building;
+import com.example.insurance_app.domain.model.client.vo.ClientId;
 import com.example.insurance_app.infrastructure.persistence.entity.building.BuildingEntity;
-import com.example.insurance_app.infrastructure.persistence.entity.building.BuildingTypeEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.client.ClientEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.geography.CityEntity;
 import com.example.insurance_app.infrastructure.persistence.mapper.BuildingEntityMapper;
@@ -29,7 +31,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,7 +42,6 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("BuildingService Unit Tests")
 class BuildingServiceTest {
-
     @Mock
     private BuildingRepository buildingRepository;
 
@@ -55,7 +55,10 @@ class BuildingServiceTest {
     private BuildingEntityMapper buildingEntityMapper;
 
     @Mock
-    private BuildingDtoMapper buildingDtoMapper;
+    private BuildingResponseMapper buildingResponseMapper;
+
+    @Mock
+    private BuildingRequestMapper buildingRequestMapper;
 
     @InjectMocks
     private BuildingService buildingService;
@@ -67,7 +70,10 @@ class BuildingServiceTest {
     private UpdateBuildingRequest updateRequest;
     private Building building;
     private BuildingEntity buildingEntity;
-    private BuildingResponse buildingResponse;
+    private ClientEntity clientEntity;
+    private CityEntity cityEntity;
+    private BuildingSummaryResponse buildingSummaryResponse;
+    private BuildingDetailedResponse buildingDetailedResponse;
 
     @BeforeEach
     void setUp() {
@@ -76,79 +82,35 @@ class BuildingServiceTest {
         buildingId = UUID.randomUUID();
 
         createRequest = new CreateBuildingRequest(
-                "Main Street",
-                "123",
-                cityId,
-                2020,
-                BuildingTypeDto.RESIDENTIAL,
-                5,
-                new BigDecimal("150.50"),
-                new BigDecimal("200000.00"),
-                false,
-                true
+                new AddressRequest("Main Street", "123", cityId),
+                new BuildingInfoRequest(
+                        2020,
+                        BuildingTypeDto.RESIDENTIAL,
+                        5,
+                        new BigDecimal("150.50"),
+                        new BigDecimal("200000.00")
+                ),
+                new RiskIndicatorsDto(false, true)
         );
 
         updateRequest = new UpdateBuildingRequest(
-                "New Street",
-                "456",
-                cityId,
-                2021,
-                BuildingTypeDto.OFFICE,
-                10,
-                new BigDecimal("300.00"),
-                new BigDecimal("500000.00"),
-                true,
-                false
+                new AddressRequest("New Street", "456", cityId),
+                new BuildingInfoRequest(
+                        2021,
+                        BuildingTypeDto.OFFICE,
+                        10,
+                        new BigDecimal("300.00"),
+                        new BigDecimal("500000.00")
+                ),
+                new RiskIndicatorsDto(true, false)
         );
 
-        building = new Building(
-                new ClientId(clientId),
-                "Main Street",
-                "123",
-                cityId,
-                2020,
-                BuildingType.RESIDENTIAL,
-                5,
-                new BigDecimal("150.50"),
-                new BigDecimal("200000.00"),
-                false,
-                true
-        );
-
-        buildingEntity = new BuildingEntity(
-                buildingId,
-                mock(ClientEntity.class),
-                "Main Street",
-                "123",
-                mock(CityEntity.class),
-                2020,
-                BuildingTypeEntity.RESIDENTIAL,
-                5,
-                new BigDecimal("150.50"),
-                new BigDecimal("200000.00"),
-                false,
-                true
-        );
-
-        buildingResponse = new BuildingResponse(
-                buildingId,
-                clientId,
-                "John Doe",
-                "Main Street",
-                "123",
-                null,
-                null,
-                null,
-                2020,
-                BuildingTypeDto.RESIDENTIAL,
-                5,
-                new BigDecimal("150.50"),
-                new BigDecimal("200000.00"),
-                false,
-                true,
-                Instant.now(),
-                Instant.now()
-        );
+        building = mock(Building.class);
+        clientEntity = mock(ClientEntity.class);
+        cityEntity = mock(CityEntity.class);
+        buildingEntity = mock(BuildingEntity.class);
+        buildingSummaryResponse = mock(BuildingSummaryResponse.class);
+        buildingDetailedResponse = mock(BuildingDetailedResponse.class);
     }
 
     @Nested
@@ -159,22 +121,24 @@ class BuildingServiceTest {
         @DisplayName("Should create building successfully")
         void shouldCreateBuildingSuccessfully() {
             // Arrange
-            when(clientRepository.existsById(clientId)).thenReturn(true);
-            when(cityRepository.existsById(cityId)).thenReturn(true);
-            when(buildingDtoMapper.toDomain(createRequest, clientId)).thenReturn(building);
-            when(buildingEntityMapper.toEntity(building)).thenReturn(buildingEntity);
+            when(clientRepository.findById(clientId)).thenReturn(Optional.of(clientEntity));
+            when(cityRepository.findById(cityId)).thenReturn(Optional.of(cityEntity));
+            when(cityEntity.getId()).thenReturn(cityId);
+            when(buildingRequestMapper.toDomain(clientId, cityId, createRequest)).thenReturn(building);
+            when(buildingEntityMapper.toEntity(building, clientEntity, cityEntity)).thenReturn(buildingEntity);
             when(buildingRepository.save(buildingEntity)).thenReturn(buildingEntity);
             when(buildingEntityMapper.toDomain(buildingEntity)).thenReturn(building);
-            when(buildingDtoMapper.toResponse(building, buildingEntity)).thenReturn(buildingResponse);
+            when(buildingResponseMapper.toSummaryResponse(building, cityEntity)).thenReturn(buildingSummaryResponse);
+            when(buildingSummaryResponse.id()).thenReturn(buildingId);
 
             // Act
-            BuildingResponse result = buildingService.createBuilding(clientId, createRequest);
+            BuildingSummaryResponse result = buildingService.createBuilding(clientId, createRequest);
 
             // Assert
             assertNotNull(result);
-            assertEquals(buildingResponse.id(), result.id());
-            verify(clientRepository).existsById(clientId);
-            verify(cityRepository).existsById(cityId);
+            assertEquals(buildingId, result.id());
+            verify(clientRepository).findById(clientId);
+            verify(cityRepository).findById(cityId);
             verify(buildingRepository).save(buildingEntity);
         }
 
@@ -182,7 +146,7 @@ class BuildingServiceTest {
         @DisplayName("Should fail when client does not exist")
         void shouldFailWhenClientDoesNotExist() {
             // Arrange
-            when(clientRepository.existsById(clientId)).thenReturn(false);
+            when(clientRepository.findById(clientId)).thenReturn(Optional.empty());
 
             // Act & Assert
             ResourceNotFoundException exception = assertThrows(
@@ -191,8 +155,8 @@ class BuildingServiceTest {
             );
 
             assertTrue(exception.getMessage().contains("Client"));
-            verify(clientRepository).existsById(clientId);
-            verify(cityRepository, never()).existsById(any());
+            verify(clientRepository).findById(clientId);
+            verify(cityRepository, never()).findById(any());
             verify(buildingRepository, never()).save(any());
         }
 
@@ -200,8 +164,8 @@ class BuildingServiceTest {
         @DisplayName("Should fail when city does not exist")
         void shouldFailWhenCityDoesNotExist() {
             // Arrange
-            when(clientRepository.existsById(clientId)).thenReturn(true);
-            when(cityRepository.existsById(cityId)).thenReturn(false);
+            when(clientRepository.findById(clientId)).thenReturn(Optional.of(clientEntity));
+            when(cityRepository.findById(cityId)).thenReturn(Optional.empty());
 
             // Act & Assert
             ResourceNotFoundException exception = assertThrows(
@@ -210,8 +174,8 @@ class BuildingServiceTest {
             );
 
             assertTrue(exception.getMessage().contains("City"));
-            verify(clientRepository).existsById(clientId);
-            verify(cityRepository).existsById(cityId);
+            verify(clientRepository).findById(clientId);
+            verify(cityRepository).findById(cityId);
             verify(buildingRepository, never()).save(any());
         }
 
@@ -220,23 +184,23 @@ class BuildingServiceTest {
         void shouldValidateDomainRulesDuringCreation() {
             // Arrange
             CreateBuildingRequest invalidRequest = new CreateBuildingRequest(
-                    "Street",
-                    "1",
-                    cityId,
-                    1700, // Invalid year
-                    BuildingTypeDto.RESIDENTIAL,
-                    null,
-                    new BigDecimal("100"),
-                    new BigDecimal("100000"),
-                    false,
-                    false
+                    new AddressRequest("Street", "1", cityId),
+                    new BuildingInfoRequest(
+                            1700, // Invalid year
+                            BuildingTypeDto.RESIDENTIAL,
+                            null,
+                            new BigDecimal("100"),
+                            new BigDecimal("100000")
+                    ),
+                    new RiskIndicatorsDto(false, false)
             );
 
-            when(clientRepository.existsById(clientId)).thenReturn(true);
-            when(cityRepository.existsById(cityId)).thenReturn(true);
-            when(buildingDtoMapper.toDomain(invalidRequest, clientId))
+            when(clientRepository.findById(clientId)).thenReturn(Optional.of(clientEntity));
+            when(cityRepository.findById(cityId)).thenReturn(Optional.of(cityEntity));
+            when(cityEntity.getId()).thenReturn(cityId);
+            when(buildingRequestMapper.toDomain(clientId, cityId, invalidRequest))
                     .thenThrow(new com.example.insurance_app.domain.exception.DomainValidationException(
-                            "Construction year must be between 1800 and 2026"
+                            "Construction year must be between 1800 and current year"
                     ));
 
             // Act & Assert
@@ -258,22 +222,19 @@ class BuildingServiceTest {
         void shouldUpdateBuildingSuccessfully() {
             // Arrange
             when(buildingRepository.findById(buildingId)).thenReturn(Optional.of(buildingEntity));
-            when(cityRepository.existsById(updateRequest.cityId())).thenReturn(true);
+            when(cityRepository.findById(cityId)).thenReturn(Optional.of(cityEntity));
             when(buildingEntityMapper.toDomain(buildingEntity)).thenReturn(building);
-            when(buildingDtoMapper.toBuildingType(updateRequest.buildingType()))
-                    .thenReturn(BuildingType.OFFICE);
             when(buildingRepository.save(buildingEntity)).thenReturn(buildingEntity);
-            when(buildingEntityMapper.toDomain(buildingEntity)).thenReturn(building);
-            when(buildingDtoMapper.toResponse(building, buildingEntity)).thenReturn(buildingResponse);
+            when(buildingResponseMapper.toSummaryResponse(building, cityEntity)).thenReturn(buildingSummaryResponse);
 
             // Act
-            BuildingResponse result = buildingService.updateBuilding(buildingId, updateRequest);
+            BuildingSummaryResponse result = buildingService.updateBuilding(buildingId, updateRequest);
 
             // Assert
             assertNotNull(result);
             verify(buildingRepository).findById(buildingId);
-            verify(cityRepository).existsById(updateRequest.cityId());
-            verify(buildingEntityMapper).updateEntity(building, buildingEntity);
+            verify(cityRepository).findById(cityId);
+            verify(buildingEntityMapper).updateEntity(building, buildingEntity, cityEntity);
             verify(buildingRepository).save(buildingEntity);
         }
 
@@ -299,7 +260,7 @@ class BuildingServiceTest {
         void shouldFailWhenUpdatingWithNonExistentCity() {
             // Arrange
             when(buildingRepository.findById(buildingId)).thenReturn(Optional.of(buildingEntity));
-            when(cityRepository.existsById(updateRequest.cityId())).thenReturn(false);
+            when(cityRepository.findById(cityId)).thenReturn(Optional.empty());
 
             // Act & Assert
             ResourceNotFoundException exception = assertThrows(
@@ -309,7 +270,7 @@ class BuildingServiceTest {
 
             assertTrue(exception.getMessage().contains("City"));
             verify(buildingRepository).findById(buildingId);
-            verify(cityRepository).existsById(updateRequest.cityId());
+            verify(cityRepository).findById(cityId);
             verify(buildingRepository, never()).save(any());
         }
 
@@ -318,23 +279,24 @@ class BuildingServiceTest {
         void shouldValidateDomainRulesDuringUpdate() {
             // Arrange
             UpdateBuildingRequest invalidRequest = new UpdateBuildingRequest(
-                    "Street",
-                    "1",
-                    cityId,
-                    2020,
-                    BuildingTypeDto.RESIDENTIAL,
-                    null,
-                    new BigDecimal("-100"), // Negative surface area
-                    new BigDecimal("100000"),
-                    false,
-                    false
+                    new AddressRequest("Street", "1", cityId),
+                    new BuildingInfoRequest(
+                            2020,
+                            BuildingTypeDto.RESIDENTIAL,
+                            null,
+                            new BigDecimal("-100"), // Negative surface area
+                            new BigDecimal("100000")
+                    ),
+                    new RiskIndicatorsDto(false, false)
             );
 
             when(buildingRepository.findById(buildingId)).thenReturn(Optional.of(buildingEntity));
-            when(cityRepository.existsById(cityId)).thenReturn(true);
+            when(cityRepository.findById(cityId)).thenReturn(Optional.of(cityEntity));
             when(buildingEntityMapper.toDomain(buildingEntity)).thenReturn(building);
-            when(buildingDtoMapper.toBuildingType(invalidRequest.buildingType()))
-                    .thenReturn(BuildingType.RESIDENTIAL);
+            when(buildingRequestMapper.toBuildingInfo(any()))
+                    .thenThrow(new com.example.insurance_app.domain.exception.DomainValidationException(
+                            "Surface area must be positive"
+                    ));
 
             // Act & Assert
             assertThrows(
@@ -356,14 +318,17 @@ class BuildingServiceTest {
             // Arrange
             when(buildingRepository.findByIdWithGeography(buildingId)).thenReturn(buildingEntity);
             when(buildingEntityMapper.toDomain(buildingEntity)).thenReturn(building);
-            when(buildingDtoMapper.toResponse(building, buildingEntity)).thenReturn(buildingResponse);
+            when(buildingEntity.getCity()).thenReturn(cityEntity);
+            when(buildingResponseMapper.toDetailedResponse(eq(building), any(), any(), any()))
+                    .thenReturn(buildingDetailedResponse);
+            when(buildingDetailedResponse.id()).thenReturn(buildingId);
 
             // Act
-            BuildingResponse result = buildingService.getBuildingById(buildingId);
+            BuildingDetailedResponse result = buildingService.getBuildingById(buildingId);
 
             // Assert
             assertNotNull(result);
-            assertEquals(buildingResponse.id(), result.id());
+            assertEquals(buildingId, result.id());
             verify(buildingRepository).findByIdWithGeography(buildingId);
         }
 
@@ -381,6 +346,8 @@ class BuildingServiceTest {
 
             assertTrue(exception.getMessage().contains("Building"));
             verify(buildingRepository).findByIdWithGeography(buildingId);
+            verifyNoInteractions(buildingEntityMapper);
+            verifyNoInteractions(buildingResponseMapper);
         }
 
         @Test
@@ -389,7 +356,9 @@ class BuildingServiceTest {
             // Arrange
             when(buildingRepository.findByIdWithGeography(buildingId)).thenReturn(buildingEntity);
             when(buildingEntityMapper.toDomain(buildingEntity)).thenReturn(building);
-            when(buildingDtoMapper.toResponse(building, buildingEntity)).thenReturn(buildingResponse);
+            when(buildingEntity.getCity()).thenReturn(cityEntity);
+            when(buildingResponseMapper.toDetailedResponse(eq(building), any(), any(), any()))
+                    .thenReturn(buildingDetailedResponse);
 
             // Act
             buildingService.getBuildingById(buildingId);
@@ -410,35 +379,40 @@ class BuildingServiceTest {
             // Arrange
             BuildingEntity building1 = mock(BuildingEntity.class);
             BuildingEntity building2 = mock(BuildingEntity.class);
+            CityEntity city1 = mock(CityEntity.class);
+            CityEntity city2 = mock(CityEntity.class);
+            when(building1.getCity()).thenReturn(city1);
+            when(building2.getCity()).thenReturn(city2);
+
             List<BuildingEntity> entities = List.of(building1, building2);
 
             Building domainBuilding1 = mock(Building.class);
             Building domainBuilding2 = mock(Building.class);
 
-            BuildingResponse response1 = mock(BuildingResponse.class);
-            BuildingResponse response2 = mock(BuildingResponse.class);
+            BuildingSummaryResponse response1 = mock(BuildingSummaryResponse.class);
+            BuildingSummaryResponse response2 = mock(BuildingSummaryResponse.class);
 
-            when(clientRepository.existsById(clientId)).thenReturn(true);
             when(buildingRepository.findByOwnerId(clientId)).thenReturn(entities);
             when(buildingEntityMapper.toDomain(building1)).thenReturn(domainBuilding1);
             when(buildingEntityMapper.toDomain(building2)).thenReturn(domainBuilding2);
-            when(buildingDtoMapper.toResponse(domainBuilding1, building1)).thenReturn(response1);
-            when(buildingDtoMapper.toResponse(domainBuilding2, building2)).thenReturn(response2);
+            when(buildingResponseMapper.toSummaryResponse(domainBuilding1, city1)).thenReturn(response1);
+            when(buildingResponseMapper.toSummaryResponse(domainBuilding2, city2)).thenReturn(response2);
 
             // Act
-            List<BuildingResponse> result = buildingService.getBuildingsByClientId(clientId);
+            List<BuildingSummaryResponse> result = buildingService.getBuildingsByClientId(clientId);
 
             // Assert
             assertNotNull(result);
             assertEquals(2, result.size());
-            verify(clientRepository).existsById(clientId);
             verify(buildingRepository).findByOwnerId(clientId);
+            verifyNoInteractions(clientRepository);
         }
 
         @Test
         @DisplayName("Should fail when client does not exist")
         void shouldFailWhenClientDoesNotExist() {
             // Arrange
+            when(buildingRepository.findByOwnerId(clientId)).thenReturn(List.of());
             when(clientRepository.existsById(clientId)).thenReturn(false);
 
             // Act & Assert
@@ -448,24 +422,23 @@ class BuildingServiceTest {
             );
 
             assertTrue(exception.getMessage().contains("Client"));
+            verify(buildingRepository).findByOwnerId(clientId);
             verify(clientRepository).existsById(clientId);
-            verify(buildingRepository, never()).findByOwnerId(any());
         }
 
         @Test
         @DisplayName("Should return empty list when client has no buildings")
         void shouldReturnEmptyListWhenClientHasNoBuildings() {
             // Arrange
-            when(clientRepository.existsById(clientId)).thenReturn(true);
             when(buildingRepository.findByOwnerId(clientId)).thenReturn(List.of());
+            when(clientRepository.existsById(clientId)).thenReturn(true);
 
             // Act
-            List<BuildingResponse> result = buildingService.getBuildingsByClientId(clientId);
+            List<BuildingSummaryResponse> result = buildingService.getBuildingsByClientId(clientId);
 
             // Assert
             assertNotNull(result);
             assertEquals(0, result.size());
-            verify(clientRepository).existsById(clientId);
             verify(buildingRepository).findByOwnerId(clientId);
         }
     }
@@ -479,56 +452,23 @@ class BuildingServiceTest {
         void shouldNotChangeOwnerDuringUpdate() {
             // Arrange
             UUID originalOwnerId = UUID.randomUUID();
-            ClientEntity originalOwner = mock(ClientEntity.class);
 
-            BuildingEntity existingEntity = new BuildingEntity(
-                    buildingId,
-                    originalOwner,
-                    "Old Street",
-                    "1",
-                    mock(CityEntity.class),
-                    2020,
-                    BuildingTypeEntity.RESIDENTIAL,
-                    3,
-                    new BigDecimal("100"),
-                    new BigDecimal("100000"),
-                    false,
-                    false
-            );
+            Building existingBuilding = mock(Building.class);
+            when(existingBuilding.getOwnerId()).thenReturn(new ClientId(originalOwnerId));
 
-            Building existingBuilding = new Building(
-                    new BuildingId(buildingId),
-                    new ClientId(originalOwnerId),
-                    "Old Street",
-                    "1",
-                    cityId,
-                    2020,
-                    BuildingType.RESIDENTIAL,
-                    3,
-                    new BigDecimal("100"),
-                    new BigDecimal("100000"),
-                    false,
-                    false
-            );
-
-            when(buildingRepository.findById(buildingId)).thenReturn(Optional.of(existingEntity));
-            when(cityRepository.existsById(updateRequest.cityId())).thenReturn(true);
-            when(buildingEntityMapper.toDomain(existingEntity)).thenReturn(existingBuilding);
-            when(buildingDtoMapper.toBuildingType(updateRequest.buildingType()))
-                    .thenReturn(BuildingType.OFFICE);
-            when(buildingRepository.save(existingEntity)).thenReturn(existingEntity);
-            when(buildingEntityMapper.toDomain(existingEntity)).thenReturn(existingBuilding);
-            when(buildingDtoMapper.toResponse(existingBuilding, existingEntity))
-                    .thenReturn(buildingResponse);
+            when(buildingRepository.findById(buildingId)).thenReturn(Optional.of(buildingEntity));
+            when(cityRepository.findById(cityId)).thenReturn(Optional.of(cityEntity));
+            when(buildingEntityMapper.toDomain(buildingEntity)).thenReturn(existingBuilding);
+            when(buildingRepository.save(buildingEntity)).thenReturn(buildingEntity);
+            when(buildingResponseMapper.toSummaryResponse(existingBuilding, cityEntity))
+                    .thenReturn(buildingSummaryResponse);
 
             // Act
             buildingService.updateBuilding(buildingId, updateRequest);
 
             // Assert
             assertEquals(originalOwnerId, existingBuilding.getOwnerId().value());
-            verify(buildingEntityMapper).updateEntity(existingBuilding, existingEntity);
-            // Owner should remain the same in entity
-            assertEquals(originalOwner, existingEntity.getOwner());
+            verify(buildingEntityMapper).updateEntity(eq(existingBuilding), eq(buildingEntity), eq(cityEntity));
         }
     }
 
@@ -541,21 +481,21 @@ class BuildingServiceTest {
         void shouldValidateInsuredValueIsPositive() {
             // Arrange
             CreateBuildingRequest invalidRequest = new CreateBuildingRequest(
-                    "Street",
-                    "1",
-                    cityId,
-                    2020,
-                    BuildingTypeDto.RESIDENTIAL,
-                    null,
-                    new BigDecimal("100"),
-                    BigDecimal.ZERO, // Invalid: zero insured value
-                    false,
-                    false
+                    new AddressRequest("Street", "1", cityId),
+                    new BuildingInfoRequest(
+                            2020,
+                            BuildingTypeDto.RESIDENTIAL,
+                            null,
+                            new BigDecimal("100"),
+                            BigDecimal.ZERO // Invalid: zero insured value
+                    ),
+                    new RiskIndicatorsDto(false, false)
             );
 
-            when(clientRepository.existsById(clientId)).thenReturn(true);
-            when(cityRepository.existsById(cityId)).thenReturn(true);
-            when(buildingDtoMapper.toDomain(invalidRequest, clientId))
+            when(clientRepository.findById(clientId)).thenReturn(Optional.of(clientEntity));
+            when(cityRepository.findById(cityId)).thenReturn(Optional.of(cityEntity));
+            when(cityEntity.getId()).thenReturn(cityId);
+            when(buildingRequestMapper.toDomain(clientId, cityId, invalidRequest))
                     .thenThrow(new com.example.insurance_app.domain.exception.DomainValidationException(
                             "Insured value must be positive"
                     ));
@@ -574,21 +514,21 @@ class BuildingServiceTest {
         void shouldValidateSurfaceAreaIsPositive() {
             // Arrange
             CreateBuildingRequest invalidRequest = new CreateBuildingRequest(
-                    "Street",
-                    "1",
-                    cityId,
-                    2020,
-                    BuildingTypeDto.RESIDENTIAL,
-                    null,
-                    new BigDecimal("-50"), // Invalid: negative surface area
-                    new BigDecimal("100000"),
-                    false,
-                    false
+                    new AddressRequest("Street", "1", cityId),
+                    new BuildingInfoRequest(
+                            2020,
+                            BuildingTypeDto.RESIDENTIAL,
+                            null,
+                            new BigDecimal("-50"), // Invalid: negative surface area
+                            new BigDecimal("100000")
+                    ),
+                    new RiskIndicatorsDto(false, false)
             );
 
-            when(clientRepository.existsById(clientId)).thenReturn(true);
-            when(cityRepository.existsById(cityId)).thenReturn(true);
-            when(buildingDtoMapper.toDomain(invalidRequest, clientId))
+            when(clientRepository.findById(clientId)).thenReturn(Optional.of(clientEntity));
+            when(cityRepository.findById(cityId)).thenReturn(Optional.of(cityEntity));
+            when(cityEntity.getId()).thenReturn(cityId);
+            when(buildingRequestMapper.toDomain(clientId, cityId, invalidRequest))
                     .thenThrow(new com.example.insurance_app.domain.exception.DomainValidationException(
                             "Surface area must be positive"
                     ));
