@@ -1,7 +1,6 @@
-package com.example.insurance_app.domain.model.vo;
+package com.example.insurance_app.domain.model.building.vo;
 
 import com.example.insurance_app.domain.util.DomainAssertions;
-
 import java.util.UUID;
 
 public record BuildingId(UUID value) {

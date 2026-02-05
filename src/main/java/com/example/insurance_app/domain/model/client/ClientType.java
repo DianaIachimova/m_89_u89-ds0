@@ -1,4 +1,4 @@
-package com.example.insurance_app.domain.model;
+package com.example.insurance_app.domain.model.client;
 
 public enum ClientType {
         INDIVIDUAL,

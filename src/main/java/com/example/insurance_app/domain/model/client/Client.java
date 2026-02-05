@@ -1,8 +1,8 @@
-package com.example.insurance_app.domain.model;
+package com.example.insurance_app.domain.model.client;
 
-import com.example.insurance_app.domain.model.vo.ClientId;
+import com.example.insurance_app.domain.model.client.vo.Address;
+import com.example.insurance_app.domain.model.client.vo.ClientId;
 import com.example.insurance_app.domain.util.DomainAssertions;
-
 import java.util.Objects;
 
 public class Client {

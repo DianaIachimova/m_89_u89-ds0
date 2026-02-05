@@ -1,7 +1,7 @@
-package com.example.insurance_app.domain.model;
+package com.example.insurance_app.domain.model.client;
 
-import com.example.insurance_app.domain.model.vo.EmailAddress;
-import com.example.insurance_app.domain.model.vo.PhoneNumber;
+import com.example.insurance_app.domain.model.client.vo.EmailAddress;
+import com.example.insurance_app.domain.model.client.vo.PhoneNumber;
 import com.example.insurance_app.domain.util.DomainAssertions;
 
 public record ContactInfo(

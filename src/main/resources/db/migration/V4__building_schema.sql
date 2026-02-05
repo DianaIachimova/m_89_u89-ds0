@@ -9,8 +9,8 @@ CREATE TABLE IF NOT EXISTS buildings (
     number_of_floors INTEGER,
     surface_area NUMERIC(10, 2) NOT NULL,
     insured_value NUMERIC(15, 2) NOT NULL,
-    flood_zone BOOLEAN NOT NULL DEFAULT FALSE,
-    earthquake_risk_zone BOOLEAN NOT NULL DEFAULT FALSE,
+    flood_zone BOOLEAN,
+    earthquake_risk_zone BOOLEAN,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_buildings_owner
