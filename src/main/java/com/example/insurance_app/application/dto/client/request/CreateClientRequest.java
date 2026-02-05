@@ -17,7 +17,7 @@ public record CreateClientRequest(
         String name,
 
         @NotBlank(message = "Identification number is required")
-        @Pattern(regexp = "^(?:\\d{13}|\\d{2,10})$\n",
+        @Pattern(regexp = "^(?:\\d{13}|\\d{2,10})$",
                 message = "Identification number must be valid")
         String identificationNumber,
 

@@ -11,7 +11,7 @@ public record UpdateClientRequest(
         @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
         String name,
 
-        @Pattern(regexp = "^[0-9]{13}$|^[0-9]{2,10}$",
+        @Pattern(regexp = "^(?:\\d{13}|\\d{2,10})$",
                 message = "Identification number must be valid")
         String identificationNumber,
 

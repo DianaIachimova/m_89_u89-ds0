@@ -13,7 +13,7 @@ public record ContactInfoRequest(
         String email,
 
         @NotBlank(message = "Phone is required")
-        @Pattern(regexp = "^\\+?[0-9]{10,15}$",
+        @Pattern(regexp = "^\\+?\\d{10,15}$",
                 message = "Phone must be a valid phone number")
         String phone
 ) {

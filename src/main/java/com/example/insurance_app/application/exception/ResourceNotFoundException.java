@@ -1,11 +1,13 @@
 package com.example.insurance_app.application.exception;
 
+import java.io.Serializable;
+
 public class ResourceNotFoundException extends RuntimeException {
     private final String resource;
     private final String field;
-    private final Object value;
+    private final Serializable value;
 
-    public ResourceNotFoundException(String resource, String field, Object value) {
+    public ResourceNotFoundException(String resource, String field, Serializable value) {
         super("%s not found".formatted(resource));
         this.resource = resource;
         this.field = field;

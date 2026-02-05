@@ -1,6 +1,5 @@
 package com.example.insurance_app.infrastructure.persistence.entity.client;
 
-import com.example.insurance_app.infrastructure.persistence.entity.geography.CityEntity;
 import jakarta.persistence.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;

@@ -16,7 +16,7 @@ public record AddressRequest(
         @Size(max = 100, message = "County must not exceed 100 characters")
         String county,
 
-        @Pattern(regexp = "^[0-9]{6}$", message = "Postal code must be 6 digits")
+        @Pattern(regexp = "^\\d{6}$", message = "Postal code must be 6 digits")
         String postalCode,
 
         @NotBlank(message = "Country is required")
