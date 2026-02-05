@@ -22,7 +22,7 @@ public record Address(
             postalCode = null;
         } else {
             var pc = DomainAssertions.normalize(postalCode).replaceAll("\\s+", "");
-            DomainAssertions.check(pc.matches("^[0-9]{6}$"), "Postal code must be 6 digits");
+            DomainAssertions.check(pc.matches("^\\d{6}$"), "Postal code must be 6 digits");
             postalCode = pc;
         }
 

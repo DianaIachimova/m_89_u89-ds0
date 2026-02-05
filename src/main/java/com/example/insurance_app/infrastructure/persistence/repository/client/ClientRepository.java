@@ -7,20 +7,23 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface ClientRepository extends JpaRepository<ClientEntity, UUID> {
 
-    Optional<ClientEntity> findByIdentificationNumber(String identificationNumber);
-
     boolean existsByIdentificationNumber(String identificationNumber);
 
-    @Query("SELECT c FROM ClientEntity c WHERE " +
-            "(:name IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
-            "(:identificationNumber IS NULL OR c.identificationNumber = :identificationNumber)")
+    @Query("""
+                SELECT c FROM ClientEntity c WHERE
+            (
+                :name IS NULL OR :name = '' OR
+                LOWER(c.name) LIKE CONCAT(LOWER(:name), '%') OR
+                LOWER(c.name) LIKE CONCAT('% ', LOWER(:name), '%')
+            ) AND (
+                :identificationNumber IS NULL OR :identificationNumber = '' OR
+                c.identificationNumber = :identificationNumber)
+            """)
     Page<ClientEntity> searchClients(
             @Param("name") String name,
             @Param("identificationNumber") String identificationNumber,
