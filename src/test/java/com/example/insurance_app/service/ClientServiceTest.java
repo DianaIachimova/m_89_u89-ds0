@@ -366,11 +366,6 @@ class ClientServiceTest {
 
             when(clientRepository.findById(clientId)).thenReturn(Optional.of(existingEntity));
             when(clientEntityMapper.toDomain(existingEntity)).thenReturn(existingClient);
-            when(clientDtoMapper.toContactInfo(requestWithNewIdNumber.contactInfo()))
-                    .thenReturn(new ContactInfo(
-                            new EmailAddress("test@example.com"),
-                            new PhoneNumber("+40712345678")
-                    ));
             when(clientRepository.existsByIdentificationNumber(newIdNumber)).thenReturn(true);
 
             // Act & Assert
