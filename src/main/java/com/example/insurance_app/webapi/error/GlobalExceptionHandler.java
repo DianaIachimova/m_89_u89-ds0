@@ -1,6 +1,6 @@
 package com.example.insurance_app.webapi.error;
 
-import com.example.insurance_app.application.exception.DuplicateIdentificationNumberException;
+import com.example.insurance_app.application.exception.DuplicateResourceException;
 import com.example.insurance_app.application.exception.ResourceNotFoundException;
 import com.example.insurance_app.domain.exception.DomainException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -62,20 +62,24 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(DuplicateIdentificationNumberException.class)
-    public ProblemDetail handleDuplicateIdentificationNumber(
-            DuplicateIdentificationNumberException ex, HttpServletRequest req) {
-        logger.warn("Duplicate identification number={} path={}",
-                ex.getIdentificationNumber(), req.getRequestURI());
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ProblemDetail handleDuplicateResource(
+            DuplicateResourceException ex, HttpServletRequest req) {
+        logger.warn("Resource={} with {} = {} already exists path={}",
+                ex.getResource(), ex.getField(), ex.getValue(), req.getRequestURI());
 
         return ProblemDetailsFactory.of(
                 HttpStatus.CONFLICT,
                 ProblemTypes.DUPLICATE_RESOURCE,
                 "Conflict",
-                ex.getMessage(),
+                "%s already exists".formatted(ex.getResource()),
                 req.getRequestURI(),
-                "DUPLICATE_IDENTIFICATION_NUMBER",
-                Map.of("identificationNumber", ex.getIdentificationNumber())
+                "DUPLICATE_RESOURCE",
+                Map.of(
+                        "resource", ex.getResource(),
+                        "field", ex.getField(),
+                        "value", ex.getValue()
+                )
         );
     }
 
