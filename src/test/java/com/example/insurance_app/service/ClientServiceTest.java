@@ -6,7 +6,7 @@ import com.example.insurance_app.application.dto.client.request.ContactInfoReque
 import com.example.insurance_app.application.dto.client.request.CreateClientRequest;
 import com.example.insurance_app.application.dto.client.request.UpdateClientRequest;
 import com.example.insurance_app.application.dto.client.response.ClientResponse;
-import com.example.insurance_app.application.exception.DuplicateIdentificationNumberException;
+import com.example.insurance_app.application.exception.DuplicateResourceException;
 import com.example.insurance_app.application.exception.ResourceNotFoundException;
 import com.example.insurance_app.application.mapper.ClientDtoMapper;
 import com.example.insurance_app.application.service.ClientService;
@@ -167,12 +167,12 @@ class ClientServiceTest {
                     .thenReturn(true);
 
             // Act & Assert
-            DuplicateIdentificationNumberException exception = assertThrows(
-                    DuplicateIdentificationNumberException.class,
+            DuplicateResourceException exception = assertThrows(
+                    DuplicateResourceException.class,
                     () -> clientService.createClient(createRequest)
             );
 
-            assertEquals("1234567890123", exception.getIdentificationNumber());
+            assertEquals("1234567890123", exception.getValue());
             verify(clientRepository).existsByIdentificationNumber(createRequest.identificationNumber());
             verify(clientRepository, never()).save(any());
         }
@@ -369,12 +369,12 @@ class ClientServiceTest {
             when(clientRepository.existsByIdentificationNumber(newIdNumber)).thenReturn(true);
 
             // Act & Assert
-            DuplicateIdentificationNumberException exception = assertThrows(
-                    DuplicateIdentificationNumberException.class,
+            DuplicateResourceException exception = assertThrows(
+                    DuplicateResourceException.class,
                     () -> clientService.updateClient(clientId, requestWithNewIdNumber)
             );
 
-            assertEquals(newIdNumber, exception.getIdentificationNumber());
+            assertEquals(newIdNumber, exception.getValue());
             verify(clientRepository, never()).save(any());
             verify(identificationNumberChangeRepository, never()).save(any());
         }

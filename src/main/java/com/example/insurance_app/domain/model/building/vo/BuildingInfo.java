@@ -3,7 +3,9 @@ package com.example.insurance_app.domain.model.building.vo;
 import com.example.insurance_app.domain.model.building.BuildingType;
 import com.example.insurance_app.domain.util.DomainAssertions;
 import java.math.BigDecimal;
-import static com.example.insurance_app.domain.model.building.vo.BuildingInfoFields.*;
+
+import static com.example.insurance_app.domain.model.ConstantFields.INSURED_VALUE;
+import static com.example.insurance_app.domain.model.ConstantFields.SURFACE_AREA;
 
 public record BuildingInfo(
         Integer constructionYear,

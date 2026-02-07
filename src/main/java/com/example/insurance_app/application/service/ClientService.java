@@ -4,7 +4,7 @@ import com.example.insurance_app.application.dto.PageDto;
 import com.example.insurance_app.application.dto.client.request.CreateClientRequest;
 import com.example.insurance_app.application.dto.client.request.UpdateClientRequest;
 import com.example.insurance_app.application.dto.client.response.ClientResponse;
-import com.example.insurance_app.application.exception.DuplicateIdentificationNumberException;
+import com.example.insurance_app.application.exception.DuplicateResourceException;
 import com.example.insurance_app.application.exception.ResourceNotFoundException;
 import com.example.insurance_app.application.mapper.ClientDtoMapper;
 import com.example.insurance_app.domain.model.client.Client;
@@ -146,7 +146,7 @@ public class ClientService {
 
     private void identificationNumberExists(String identificationNumber) {
         if (clientRepository.existsByIdentificationNumber(identificationNumber)) {
-            throw new DuplicateIdentificationNumberException(identificationNumber);
+            throw new DuplicateResourceException("Client", "identificationNumber", identificationNumber);
         }
     }
 
