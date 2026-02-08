@@ -4,6 +4,7 @@ import com.example.insurance_app.domain.exception.DomainValidationException;
 import com.example.insurance_app.domain.model.client.ClientType;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 
 public final class DomainAssertions {
@@ -57,8 +58,9 @@ public final class DomainAssertions {
         return v != null && v.matches("\\d{2,10}");
     }
 
-    public static void requireInRange(int value, int min, int max, String field) {
-        check(value >= min && value <= max, field + " must be between " + min + " and " + max);
+    public static <T extends Comparable<T>>void requireInRange(T value, T min, T max, String field) {
+        check(min.compareTo(max) < 0, "Invalid range: min > max");
+        check(value.compareTo(min) >= 0  && value.compareTo(max) <= 0, field + " must be between " + min + " and " + max);
     }
 
     public static void requireBigDecimalFormat(BigDecimal value, int integerDigits, int fractionDigits, String field) {
@@ -77,8 +79,16 @@ public final class DomainAssertions {
         );
     }
 
+    public static void requireEffectivePeriod(LocalDate effectiveFrom, LocalDate effectiveTo) {
+        notNull(effectiveFrom, "Effective from");
+        if (effectiveTo != null) {
+            check(!effectiveFrom.isAfter(effectiveTo), "Effective from must not be after effective to");
+        }
+    }
 
 
-    
+
+
+
 
 }
