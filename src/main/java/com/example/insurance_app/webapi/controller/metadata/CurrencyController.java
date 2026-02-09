@@ -2,7 +2,7 @@ package com.example.insurance_app.webapi.controller.metadata;
 
 import com.example.insurance_app.application.dto.PageDto;
 import com.example.insurance_app.application.dto.metadata.currency.request.CreateCurrencyRequest;
-import com.example.insurance_app.application.dto.metadata.currency.request.UpdateCurrencyStatusRequest;
+import com.example.insurance_app.application.dto.metadata.currency.request.CurrencyActionRequest;
 import com.example.insurance_app.application.dto.metadata.currency.response.CurrencyResponse;
 import com.example.insurance_app.application.service.metadata.CurrencyService;
 import jakarta.validation.Valid;
@@ -36,11 +36,11 @@ public class CurrencyController {
         return currencyService.createCurrency(request);
     }
 
-    @PutMapping("/{currencyId}")
-    public CurrencyResponse setCurrencyActive(
+    @PostMapping("/{currencyId}/actions")
+    public CurrencyResponse executeAction(
             @PathVariable UUID currencyId,
-            @Valid @RequestBody UpdateCurrencyStatusRequest request
+            @Valid @RequestBody CurrencyActionRequest request
     ) {
-        return currencyService.updateActiveStatus(currencyId, request);
+        return currencyService.executeAction(currencyId, request);
     }
 }

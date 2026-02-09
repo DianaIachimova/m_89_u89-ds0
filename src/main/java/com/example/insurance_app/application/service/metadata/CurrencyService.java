@@ -1,8 +1,9 @@
 package com.example.insurance_app.application.service.metadata;
 
 import com.example.insurance_app.application.dto.PageDto;
+import com.example.insurance_app.application.dto.metadata.currency.CurrencyAction;
 import com.example.insurance_app.application.dto.metadata.currency.request.CreateCurrencyRequest;
-import com.example.insurance_app.application.dto.metadata.currency.request.UpdateCurrencyStatusRequest;
+import com.example.insurance_app.application.dto.metadata.currency.request.CurrencyActionRequest;
 import com.example.insurance_app.application.dto.metadata.currency.response.CurrencyResponse;
 import com.example.insurance_app.application.exception.DuplicateResourceException;
 import com.example.insurance_app.application.exception.ResourceNotFoundException;
@@ -56,6 +57,7 @@ public class CurrencyService {
     }
 
 
+    @Transactional
     public CurrencyResponse createCurrency(CreateCurrencyRequest request) {
         logger.info("Creating currency with code: {}", request.code());
         var normalizedCode = new CurrencyCode(request.code()).code();
@@ -73,24 +75,27 @@ public class CurrencyService {
         return currencyDtoMapper.toResponse(savedCurrency);
     }
 
-    public CurrencyResponse updateActiveStatus(UUID currencyId, UpdateCurrencyStatusRequest request) {
-        logger.info("Setting currency active status with id: {}, isActive: {}", currencyId, request.isActive());
+    @Transactional
+    public CurrencyResponse executeAction(UUID currencyId, CurrencyActionRequest request) {
+        logger.info("Executing action={} on currency id={}", request.action(), currencyId);
 
-        CurrencyEntity existingEntity = currencyRepository.findById(currencyId)
+        CurrencyEntity entity = currencyRepository.findById(currencyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Currency", "id", currencyId));
 
-        Currency existingCurrency = currencyEntityMapper.toDomain(existingEntity);
-        currencyDtoMapper.applyActivation(request, existingCurrency);
+        Currency domain = currencyEntityMapper.toDomain(entity);
 
-        //update db
-        currencyEntityMapper.updateEntity(existingCurrency, existingEntity);
-        CurrencyEntity updatedEntity = currencyRepository.save(existingEntity);
+        if (request.action() == CurrencyAction.ACTIVATE) {
+            domain.activate();
+        } else {
+            domain.deactivate();
+        }
 
-        //get response
-        Currency updatedCurrency = currencyEntityMapper.toDomain(updatedEntity);
+        currencyEntityMapper.updateEntity(domain, entity);
+        CurrencyEntity saved = currencyRepository.save(entity);
+        Currency updated = currencyEntityMapper.toDomain(saved);
 
-        logger.info("Currency active status updated successfully with id: {}", currencyId);
-        return currencyDtoMapper.toResponse(updatedCurrency);
+        logger.info("Currency action={} completed for id={}", request.action(), currencyId);
+        return currencyDtoMapper.toResponse(updated);
     }
 
 
