@@ -17,17 +17,17 @@ public interface FeeConfigRepository extends JpaRepository<FeeConfigurationEntit
     Page<FeeConfigurationEntity> findAllByOrderByTypeAsc(Pageable pageable);
 
     @Query(value = """
-select (count(*) > 0)
-from fee_configurations f
-where f.type = cast(:type as varchar)
-  and f.is_active = true
-  and f.code = cast(:code as varchar)
-  and (
-       (f.effective_to is null or cast(:from as date) < f.effective_to)
-       and
-       (cast(:to as date) is null or f.effective_from < cast(:to as date))
-  )
-""", nativeQuery = true)
+        select (count(*) > 0)
+        from fee_configurations f
+        where f.type = cast(:type as varchar)
+          and f.is_active = true
+          and f.code = cast(:code as varchar)
+          and (
+               (f.effective_to is null or cast(:from as date) < f.effective_to)
+               and
+               (cast(:to as date) is null or f.effective_from < cast(:to as date))
+          )
+    """, nativeQuery = true)
     boolean existsActiveOverlapNative(
             @Param("type") String type,
             @Param("code") String code,
