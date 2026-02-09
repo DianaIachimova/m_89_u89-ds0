@@ -1,10 +1,10 @@
 package com.example.insurance_app.domain;
 
 import com.example.insurance_app.domain.exception.DomainValidationException;
-import com.example.insurance_app.domain.model.client.vo.Address;
 import com.example.insurance_app.domain.model.client.Client;
 import com.example.insurance_app.domain.model.client.ClientType;
 import com.example.insurance_app.domain.model.client.ContactInfo;
+import com.example.insurance_app.domain.model.client.vo.Address;
 import com.example.insurance_app.domain.model.client.vo.ClientId;
 import com.example.insurance_app.domain.model.client.vo.EmailAddress;
 import com.example.insurance_app.domain.model.client.vo.PhoneNumber;
