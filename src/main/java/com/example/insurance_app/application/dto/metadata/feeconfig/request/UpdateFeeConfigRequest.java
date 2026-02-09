@@ -1,15 +1,11 @@
 package com.example.insurance_app.application.dto.metadata.feeconfig.request;
 
-import com.example.insurance_app.application.dto.metadata.feeconfig.FeeConfigTypeDto;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record UpdateFeeConfigRequest(
-        @NotNull(message = "Update operation is required")
-        FeeUpdateOperation operation,
-
         @Size(max = 200, message = "Name must be between 1 and 200 characters")
         String name,
 

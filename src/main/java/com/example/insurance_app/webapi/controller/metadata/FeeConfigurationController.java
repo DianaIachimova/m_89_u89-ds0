@@ -40,12 +40,16 @@ public class FeeConfigurationController {
     }
 
     @PutMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    public FeeConfigResponse putFeeConfiguration(
+    public FeeConfigResponse updateFeeConfiguration(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateFeeConfigRequest request
     ) {
-        return feeUpdateService.put(id, request);
+        return feeUpdateService.update(id, request);
+    }
+
+    @PostMapping("/{id}/deactivate")
+    public FeeConfigResponse deactivateFeeConfiguration(@PathVariable UUID id) {
+        return feeUpdateService.deactivate(id);
     }
 
 }
