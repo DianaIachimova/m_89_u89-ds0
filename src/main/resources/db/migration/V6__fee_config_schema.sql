@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS fee_configurations (
     code VARCHAR(50) NOT NULL,
     name VARCHAR(200) NOT NULL,
     type VARCHAR(30) NOT NULL,
-    percentage DECIMAL(6, 4) NOT NULL,
+    percentage DECIMAL(5, 4) NOT NULL,
     effective_from DATE NOT NULL,
     effective_to DATE,
     is_active BOOLEAN NOT NULL DEFAULT false,
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS fee_configurations (
     CONSTRAINT ck_fee_configurations_code_not_empty CHECK (LENGTH(TRIM(code)) > 3),
     CONSTRAINT ck_fee_configurations_name_not_empty CHECK (LENGTH(TRIM(name)) > 0),
     CONSTRAINT ck_fee_configurations_type_valid CHECK (type IN ('BROKER_COMMISSION', 'RISK_ADJUSTMENT', 'ADMIN_FEE')),
-    CONSTRAINT ck_fee_configurations_percentage_range CHECK (percentage >= 0 AND percentage <= 50),
+    CONSTRAINT ck_fee_configurations_percentage_range CHECK (percentage >= 0 AND percentage <= 0.5),
     CONSTRAINT ck_fee_configurations_effective_period CHECK (effective_to IS NULL OR effective_from <= effective_to),
     CONSTRAINT uk_fee_configurations_code_type_active_period
     UNIQUE (code, type, is_active, effective_from, effective_to)

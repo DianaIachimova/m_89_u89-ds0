@@ -12,6 +12,7 @@ import com.example.insurance_app.domain.model.metadata.feeconfig.vo.FeePercentag
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.feeconfig.FeeConfigurationEntity;
 import com.example.insurance_app.infrastructure.persistence.mapper.FeeConfigEntityMapper;
 import com.example.insurance_app.infrastructure.persistence.repository.metadata.FeeConfigRepository;
+import com.example.insurance_app.infrastructure.persistence.repository.policy.PolicyPricingSnapshotItemRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -28,31 +29,35 @@ public class FeeConfigurationUpdateService {
     private final FeeConfigRepository feeRepository;
     private final FeeConfigEntityMapper feeEntityMapper;
     private final FeeConfigDtoMapper feeDtoMapper;
+    private final PolicyPricingSnapshotItemRepository snapshotItemRepo;
 
     public FeeConfigurationUpdateService(FeeConfigRepository feeRepository,
-                                   FeeConfigEntityMapper feeEntityMapper,
-                                   FeeConfigDtoMapper feeDtoMapper) {
+                                         FeeConfigEntityMapper feeEntityMapper,
+                                         FeeConfigDtoMapper feeDtoMapper,
+                                         PolicyPricingSnapshotItemRepository snapshotItemRepo) {
         this.feeRepository = feeRepository;
         this.feeEntityMapper = feeEntityMapper;
         this.feeDtoMapper = feeDtoMapper;
+        this.snapshotItemRepo = snapshotItemRepo;
     }
 
     @Transactional
-    public FeeConfigResponse update(UUID id, UpdateFeeConfigRequest request) {
+    public FeeConfigResponse update(UUID id, UpdateFeeConfigRequest req) {
         FeeConfigurationEntity entity = requireFeeConfig(id);
-        validateRequiredUpdateFields(request);
+        validateRequiredUpdateFields(req);
 
         UUID entityId = entity.getId();
         logger.info("Updating fee configuration with id: {}", entityId);
 
         FeeConfiguration current = feeEntityMapper.toDomain(entity);
 
-        String newName = request.name() != null ? request.name() : current.getDetails().name().value();
-        BigDecimal newPercentage = request.percentage() != null ? request.percentage() : current.getDetails().percentage().value();
-        LocalDate newTo = request.effectiveTo() != null ? request.effectiveTo() : current.getDetails().period().to();
+        String newName = req.name() != null ? req.name() : current.getDetails().name().value();
+        BigDecimal newPercentage = req.percentage() != null ? req.percentage() : current.getDetails().percentage().value();
+        LocalDate newTo = req.effectiveTo() != null ? req.effectiveTo() : current.getDetails().period().to();
 
-        boolean activePolices = false;
-        if (activePolices) {
+        boolean usedBySnapshot = snapshotItemRepo.existsBySourceTypeAndSourceId(
+                "FEE_CONFIGURATION", entity.getId());
+        if (usedBySnapshot) {
             return updateByCreatingNewVersion(entity, current, newName, newPercentage, newTo);
         }
         return updateInPlace(entity, current, newName, newPercentage, newTo);
@@ -73,7 +78,12 @@ public class FeeConfigurationUpdateService {
         return feeDtoMapper.toResponse(updated);
     }
 
-    private FeeConfigResponse updateInPlace(FeeConfigurationEntity entity, FeeConfiguration current ,
+    private FeeConfigurationEntity requireFeeConfig(UUID id) {
+        return feeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("FeeConfiguration", "id", id));
+    }
+
+    private FeeConfigResponse updateInPlace(FeeConfigurationEntity entity, FeeConfiguration current,
                                             String newName, BigDecimal newPercentage, LocalDate newTo) {
         UUID entityId = entity.getId();
         current.updateDetails(
@@ -90,14 +100,13 @@ public class FeeConfigurationUpdateService {
     }
 
     private FeeConfigResponse updateByCreatingNewVersion(FeeConfigurationEntity existingEntity,
-                                                         FeeConfiguration current , String newName,
+                                                         FeeConfiguration current, String newName,
                                                          BigDecimal newPercentage, LocalDate newTo) {
         UUID existingId = existingEntity.getId();
         current.deactivate();
         feeEntityMapper.updateEntity(current, existingEntity);
         feeRepository.save(existingEntity);
         logger.info("Closed fee configuration with id: {} (used by active policies)", existingId);
-
 
         FeeDetails newDetails = new FeeDetails(
                 current.getDetails().code(),
@@ -112,11 +121,6 @@ public class FeeConfigurationUpdateService {
         FeeConfiguration updated = feeEntityMapper.toDomain(saved);
         logger.info("Created new fee configuration version with id: {}", saved.getId());
         return feeDtoMapper.toResponse(updated);
-    }
-
-    private FeeConfigurationEntity requireFeeConfig(UUID id) {
-        return feeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("FeeConfiguration", "id", id));
     }
 
     private void validateRequiredUpdateFields(UpdateFeeConfigRequest request) {

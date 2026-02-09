@@ -8,8 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -34,4 +34,20 @@ public interface FeeConfigRepository extends JpaRepository<FeeConfigurationEntit
             @Param("from") LocalDate from,
             @Param("to") LocalDate to
     );
+
+    @Query("SELECT f FROM FeeConfigurationEntity f WHERE f.active = true " +
+            "AND f.type <> :excludeType " +
+            "AND f.period.effectiveFrom <= :date " +
+            "AND (f.period.effectiveTo IS NULL OR f.period.effectiveTo >= :date)")
+    List<FeeConfigurationEntity> findActiveOnDateExcludingType(
+            @Param("date") LocalDate date,
+            @Param("excludeType") FeeConfigTypeEntity excludeType);
+
+    @Query("SELECT f FROM FeeConfigurationEntity f WHERE f.active = true " +
+            "AND f.type = :type " +
+            "AND f.period.effectiveFrom <= :date " +
+            "AND (f.period.effectiveTo IS NULL OR f.period.effectiveTo >= :date)")
+    List<FeeConfigurationEntity> findActiveOnDateByType(
+            @Param("date") LocalDate date,
+            @Param("type") FeeConfigTypeEntity type);
 }

@@ -7,6 +7,7 @@ public final class ConstantFields {
     public static final String FEE_PERCENTAGE = "Fee percentage";
     public static final String ADJUSTMENT_PERCENTAGE = "Adjustment percentage";
     public static final String COMMISSION_PERCENTAGE = "Commission percentage";
+    public static final String PREMIUM_AMOUNT = "Premium amount";
 
     private ConstantFields(){}
 }
