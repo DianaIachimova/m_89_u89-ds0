@@ -38,31 +38,8 @@ public class FeeConfigurationUpdateService {
     }
 
     @Transactional
-    public FeeConfigResponse put(UUID id, UpdateFeeConfigRequest req) {
-        FeeConfigurationEntity entity = feeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("FeeConfiguration", "id", id));
-
-        return switch (req.operation()) {
-            case DEACTIVATE -> handleDeactivate(req, entity);
-            case UPDATE_FIELDS -> handleUpdate(req, entity);
-        };
-    }
-
-    private FeeConfigResponse handleDeactivate(UpdateFeeConfigRequest req, FeeConfigurationEntity entity) {
-        logger.info("Deactivating fee configuration with id: {}", entity.getId());
-        validateDeactivate(req);
-
-        FeeConfiguration domain = feeEntityMapper.toDomain(entity);
-        domain.deactivate();
-        feeEntityMapper.updateEntity(domain, entity);
-        FeeConfigurationEntity saved = feeRepository.save(entity);
-        FeeConfiguration updated = feeEntityMapper.toDomain(saved);
-
-        logger.info("Fee configuration deactivated with id: {}", updated.getId());
-        return feeDtoMapper.toResponse(updated);
-    }
-
-    private FeeConfigResponse handleUpdate(UpdateFeeConfigRequest request, FeeConfigurationEntity entity) {
+    public FeeConfigResponse update(UUID id, UpdateFeeConfigRequest request) {
+        FeeConfigurationEntity entity = requireFeeConfig(id);
         validateRequiredUpdateFields(request);
 
         UUID entityId = entity.getId();
@@ -81,6 +58,20 @@ public class FeeConfigurationUpdateService {
         return updateInPlace(entity, current, newName, newPercentage, newTo);
     }
 
+    @Transactional
+    public FeeConfigResponse deactivate(UUID id) {
+        FeeConfigurationEntity entity = requireFeeConfig(id);
+        logger.info("Deactivating fee configuration with id: {}", entity.getId());
+
+        FeeConfiguration domain = feeEntityMapper.toDomain(entity);
+        domain.deactivate();
+        feeEntityMapper.updateEntity(domain, entity);
+        FeeConfigurationEntity saved = feeRepository.save(entity);
+        FeeConfiguration updated = feeEntityMapper.toDomain(saved);
+
+        logger.info("Fee configuration deactivated with id: {}", updated.getId());
+        return feeDtoMapper.toResponse(updated);
+    }
 
     private FeeConfigResponse updateInPlace(FeeConfigurationEntity entity, FeeConfiguration current ,
                                             String newName, BigDecimal newPercentage, LocalDate newTo) {
@@ -123,17 +114,14 @@ public class FeeConfigurationUpdateService {
         return feeDtoMapper.toResponse(updated);
     }
 
-    private void validateDeactivate(UpdateFeeConfigRequest req) {
-
-        if (req.name() != null || req.percentage() != null || req.effectiveTo() != null) {
-            throw new IllegalArgumentException("No update fields are allowed for DEACTIVATE");
-        }
-
+    private FeeConfigurationEntity requireFeeConfig(UUID id) {
+        return feeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("FeeConfiguration", "id", id));
     }
 
     private void validateRequiredUpdateFields(UpdateFeeConfigRequest request) {
         if (request.name() == null && request.effectiveTo() == null && request.percentage() == null) {
-            throw new IllegalArgumentException("When action is UPDATE, name percentage or Effectiveto are required");
+            throw new IllegalArgumentException("At least one of name, percentage, or effectiveTo is required");
         }
     }
 }
