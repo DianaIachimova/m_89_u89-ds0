@@ -1,7 +1,6 @@
 package com.example.insurance_app.application.mapper;
 
 import com.example.insurance_app.application.dto.metadata.currency.request.CreateCurrencyRequest;
-import com.example.insurance_app.application.dto.metadata.currency.request.UpdateCurrencyStatusRequest;
 import com.example.insurance_app.application.dto.metadata.currency.response.CurrencyResponse;
 import com.example.insurance_app.domain.model.metadata.currency.Currency;
 import com.example.insurance_app.domain.model.metadata.currency.vo.CurrencyCode;
@@ -36,15 +35,6 @@ public class CurrencyDtoMapper {
                 domain.getAudit().createdAt(),
                 domain.getAudit().updatedAt()
         );
-    }
-
-    public void applyActivation(UpdateCurrencyStatusRequest request, Currency domain) {
-        if (request == null || domain == null)
-            return;
-
-        if (Boolean.TRUE.equals(request.isActive()))
-            domain.activate();
-        else domain.deactivate();
     }
 
 }
