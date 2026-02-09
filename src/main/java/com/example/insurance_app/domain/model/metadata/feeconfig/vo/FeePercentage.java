@@ -10,8 +10,8 @@ public record FeePercentage (BigDecimal value) {
 
     public FeePercentage {
         DomainAssertions.notNull(value, FEE_PERCENTAGE);
-        DomainAssertions.requireBigDecimalFormat(value, 2, 4, FEE_PERCENTAGE);
-        DomainAssertions.requireInRange(value,   BigDecimal.ZERO, new BigDecimal("50.0"), FEE_PERCENTAGE);
+        DomainAssertions.requireBigDecimalFormat(value, 1, 4, FEE_PERCENTAGE);
+        DomainAssertions.requireInRange(value, BigDecimal.ZERO, new BigDecimal("0.5000"), FEE_PERCENTAGE);
         value = value.setScale(4, RoundingMode.HALF_UP);
     }
 

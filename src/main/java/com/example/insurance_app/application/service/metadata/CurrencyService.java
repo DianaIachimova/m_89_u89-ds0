@@ -8,11 +8,14 @@ import com.example.insurance_app.application.dto.metadata.currency.response.Curr
 import com.example.insurance_app.application.exception.DuplicateResourceException;
 import com.example.insurance_app.application.exception.ResourceNotFoundException;
 import com.example.insurance_app.application.mapper.CurrencyDtoMapper;
+import com.example.insurance_app.domain.exception.DomainValidationException;
 import com.example.insurance_app.domain.model.metadata.currency.Currency;
 import com.example.insurance_app.domain.model.metadata.currency.vo.CurrencyCode;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.CurrencyEntity;
+import com.example.insurance_app.infrastructure.persistence.entity.policy.PolicyStatusEntity;
 import com.example.insurance_app.infrastructure.persistence.mapper.CurrencyEntityMapper;
 import com.example.insurance_app.infrastructure.persistence.repository.metadata.CurrencyRepository;
+import com.example.insurance_app.infrastructure.persistence.repository.policy.PolicyRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
@@ -29,11 +32,16 @@ public class CurrencyService {
     private final CurrencyRepository currencyRepository;
     private final CurrencyDtoMapper currencyDtoMapper;
     private final CurrencyEntityMapper currencyEntityMapper;
+    private final PolicyRepository policyRepository;
 
-    public CurrencyService(CurrencyRepository currencyRepository, CurrencyDtoMapper currencyDtoMapper, CurrencyEntityMapper currencyEntityMapper) {
+    public CurrencyService(CurrencyRepository currencyRepository,
+                           CurrencyDtoMapper currencyDtoMapper,
+                           CurrencyEntityMapper currencyEntityMapper,
+                           PolicyRepository policyRepository) {
         this.currencyRepository = currencyRepository;
         this.currencyDtoMapper = currencyDtoMapper;
         this.currencyEntityMapper = currencyEntityMapper;
+        this.policyRepository = policyRepository;
     }
 
     @Transactional(readOnly = true)
@@ -55,7 +63,6 @@ public class CurrencyService {
                 page.getTotalPages()
         );
     }
-
 
     @Transactional
     public CurrencyResponse createCurrency(CreateCurrencyRequest request) {
@@ -87,6 +94,12 @@ public class CurrencyService {
         if (request.action() == CurrencyAction.ACTIVATE) {
             domain.activate();
         } else {
+            boolean usedByActive = policyRepository.existsByStatusAndCurrencyId(
+                    PolicyStatusEntity.ACTIVE, currencyId);
+            if (usedByActive) {
+                throw new DomainValidationException(
+                        "Cannot deactivate currency used by active policies");
+            }
             domain.deactivate();
         }
 
