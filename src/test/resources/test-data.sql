@@ -29,5 +29,5 @@ INSERT INTO risk_factor_configurations (id, level, reference_id, building_type, 
 
 -- Brokers
 INSERT INTO brokers (id, broker_code, name, email, phone, status, commission_percentage, created_at, updated_at) VALUES
-('b0b0b0b0-0000-4000-a000-000000000001', 'BRK-TEST-001', 'Test Broker Active', 'broker.active@test.com', '+40712345678', 'ACTIVE', 5.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('b0b0b0b0-0000-4000-a000-000000000002', 'BRK-TEST-002', 'Test Broker Inactive', 'broker.inactive@test.com', '+40712345679', 'INACTIVE', 3.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+('b0b0b0b0-0000-4000-a000-000000000001', 'BRK-TEST-001', 'Test Broker Active', 'broker.active@test.com', '+40712345678', 'ACTIVE', 0.05, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('b0b0b0b0-0000-4000-a000-000000000002', 'BRK-TEST-002', 'Test Broker Inactive', 'broker.inactive@test.com', '+40712345679', 'INACTIVE', 0.03, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);

@@ -52,7 +52,10 @@ public final class FeeConfiguration {
 
     public void deactivate() {
         if (details.period().to() == null)
-            this.details.period().changeEnd(LocalDate.now());
+            this.details = FeeDetails.of(
+                    details.code(), details.name(), details.type(), details.percentage(),
+                    details.period().changeEnd(LocalDate.now())
+            );
 
         this.active = false;
     }

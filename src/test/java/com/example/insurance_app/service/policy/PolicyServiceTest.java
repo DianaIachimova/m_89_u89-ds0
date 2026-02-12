@@ -2,6 +2,7 @@ package com.example.insurance_app.service.policy;
 
 import com.example.insurance_app.application.dto.policy.request.CancelPolicyRequest;
 import com.example.insurance_app.application.dto.policy.request.CreatePolicyRequest;
+import com.example.insurance_app.application.dto.policy.response.PolicyDetailResponse;
 import com.example.insurance_app.application.dto.policy.response.PolicyResponse;
 import com.example.insurance_app.application.exception.PolicyNotFoundException;
 import com.example.insurance_app.application.exception.ResourceNotFoundException;
@@ -12,6 +13,8 @@ import com.example.insurance_app.application.service.policy.PolicyService;
 import com.example.insurance_app.application.service.policy.pricing.PremiumCalculationResult;
 import com.example.insurance_app.application.service.policy.pricing.PremiumCalculator;
 import com.example.insurance_app.domain.exception.DomainValidationException;
+import com.example.insurance_app.domain.model.building.Building;
+import com.example.insurance_app.domain.model.client.Client;
 import com.example.insurance_app.domain.model.policy.Policy;
 import com.example.insurance_app.infrastructure.persistence.entity.broker.BrokerEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.building.BuildingEntity;
@@ -23,6 +26,8 @@ import com.example.insurance_app.infrastructure.persistence.entity.geography.Cou
 import com.example.insurance_app.infrastructure.persistence.entity.geography.CountyEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.CurrencyEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.policy.PolicyEntity;
+import com.example.insurance_app.infrastructure.persistence.mapper.BuildingEntityMapper;
+import com.example.insurance_app.infrastructure.persistence.mapper.ClientEntityMapper;
 import com.example.insurance_app.infrastructure.persistence.mapper.PolicyEntityMapper;
 import com.example.insurance_app.infrastructure.persistence.repository.policy.PolicyPricingSnapshotRepository;
 import com.example.insurance_app.infrastructure.persistence.repository.policy.PolicyRepository;
@@ -41,10 +46,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("PolicyService Unit Tests")
@@ -64,6 +69,10 @@ class PolicyServiceTest {
     private PolicyDtoMapper dtoMapper;
     @Mock
     private PolicyNumberGenerator numberGenerator;
+    @Mock
+    private ClientEntityMapper clientEntityMapper;
+    @Mock
+    private BuildingEntityMapper buildingEntityMapper;
 
     @InjectMocks
     private PolicyService policyService;
@@ -335,22 +344,38 @@ class PolicyServiceTest {
     class GetByIdTests {
 
         @Test
-        @DisplayName("Happy path: should return policy response")
+        @DisplayName("Happy path: should return policy detail response with currency details")
         void happyPath() {
             PolicyEntity entity = mock(PolicyEntity.class);
             CurrencyEntity currency = mock(CurrencyEntity.class);
+            ClientEntity clientEntity = mock(ClientEntity.class);
+            BuildingEntity buildingEntity = mock(BuildingEntity.class);
+            CityEntity city = mock(CityEntity.class);
+            CountyEntity county = mock(CountyEntity.class);
+            CountryEntity country = mock(CountryEntity.class);
             Policy domain = mock(Policy.class);
-            PolicyResponse response = mock(PolicyResponse.class);
+            Client clientDomain = mock(Client.class);
+            Building buildingDomain = mock(Building.class);
+            PolicyDetailResponse detailResponse = mock(PolicyDetailResponse.class);
 
             when(policyRepo.findById(policyId)).thenReturn(Optional.of(entity));
-            when(entity.getCurrency()).thenReturn(currency);
-            when(currency.getCode()).thenReturn("RON");
             when(entityMapper.toDomain(entity)).thenReturn(domain);
-            when(dtoMapper.toResponse(domain, "RON")).thenReturn(response);
+            when(entity.getClient()).thenReturn(clientEntity);
+            when(entity.getBuilding()).thenReturn(buildingEntity);
+            when(entity.getCurrency()).thenReturn(currency);
+            when(buildingEntity.getCity()).thenReturn(city);
+            when(city.getCounty()).thenReturn(county);
+            when(county.getCountry()).thenReturn(country);
+            when(clientEntityMapper.toDomain(clientEntity)).thenReturn(clientDomain);
+            when(buildingEntityMapper.toDomain(buildingEntity)).thenReturn(buildingDomain);
+            when(dtoMapper.toDetailResponse(domain, currency, clientDomain, clientEntity,
+                    buildingDomain, city, county, country)).thenReturn(detailResponse);
 
-            PolicyResponse result = policyService.getById(policyId);
+            PolicyDetailResponse result = policyService.getById(policyId);
 
             assertNotNull(result);
+            verify(dtoMapper).toDetailResponse(domain, currency, clientDomain, clientEntity,
+                    buildingDomain, city, county, country);
         }
 
         @Test

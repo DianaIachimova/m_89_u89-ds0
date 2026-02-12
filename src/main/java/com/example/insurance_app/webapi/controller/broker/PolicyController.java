@@ -3,6 +3,7 @@ package com.example.insurance_app.webapi.controller.broker;
 import com.example.insurance_app.application.dto.PageDto;
 import com.example.insurance_app.application.dto.policy.request.CancelPolicyRequest;
 import com.example.insurance_app.application.dto.policy.request.CreatePolicyRequest;
+import com.example.insurance_app.application.dto.policy.response.PolicyDetailResponse;
 import com.example.insurance_app.application.dto.policy.response.PolicyResponse;
 import com.example.insurance_app.application.dto.policy.response.PolicySummaryResponse;
 import com.example.insurance_app.application.service.policy.PolicyService;
@@ -55,7 +56,7 @@ public class PolicyController {
     }
 
     @GetMapping("/{id}")
-    public PolicyResponse getById(@PathVariable UUID id) {
+    public PolicyDetailResponse getById(@PathVariable UUID id) {
         return policyService.getById(id);
     }
 }

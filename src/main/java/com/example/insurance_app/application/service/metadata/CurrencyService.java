@@ -91,20 +91,21 @@ public class CurrencyService {
 
         Currency domain = currencyEntityMapper.toDomain(entity);
 
-        if (request.action() == CurrencyAction.ACTIVATE) {
-            domain.activate();
-        } else {
-            boolean usedByActive = policyRepository.existsByStatusAndCurrencyId(
-                    PolicyStatusEntity.ACTIVE, currencyId);
-            if (usedByActive) {
-                throw new DomainValidationException(
-                        "Cannot deactivate currency used by active policies");
+        switch(request.action()) {
+            case ACTIVATE ->  domain.activate();
+            case DEACTIVATE ->  {
+                boolean usedByActive = policyRepository.existsByStatusAndCurrencyId(
+                        PolicyStatusEntity.ACTIVE, currencyId);
+                if (usedByActive) {
+                    throw new DomainValidationException(
+                            "Cannot deactivate currency used by active policies");
+                }
+                domain.deactivate();
             }
-            domain.deactivate();
         }
 
         currencyEntityMapper.updateEntity(domain, entity);
-        CurrencyEntity saved = currencyRepository.save(entity);
+        CurrencyEntity saved = currencyRepository.saveAndFlush(entity);
         Currency updated = currencyEntityMapper.toDomain(saved);
 
         logger.info("Currency action={} completed for id={}", request.action(), currencyId);

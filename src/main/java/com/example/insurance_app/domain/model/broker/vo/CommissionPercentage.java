@@ -9,8 +9,8 @@ import static com.example.insurance_app.domain.model.ConstantFields.COMMISSION_P
 public record CommissionPercentage(BigDecimal value) {
     public CommissionPercentage {
         DomainAssertions.notNull(value, COMMISSION_PERCENTAGE);
-        DomainAssertions.requireInRange(value, BigDecimal.ZERO, BigDecimal.valueOf(100) , COMMISSION_PERCENTAGE);
-        DomainAssertions.requireBigDecimalFormat(value, 3, 2, COMMISSION_PERCENTAGE);
+        DomainAssertions.requireInRange(value, BigDecimal.ZERO, BigDecimal.valueOf(1) , COMMISSION_PERCENTAGE);
+        DomainAssertions.requireBigDecimalFormat(value, 1, 4, COMMISSION_PERCENTAGE);
         value = value.setScale(2, RoundingMode.HALF_UP);
     }
 }

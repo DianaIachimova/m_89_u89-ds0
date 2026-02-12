@@ -117,11 +117,12 @@ public class RiskFactorService {
         RiskFactorConfigurationEntity entity = requireRiskFactor(id);
         RiskFactorConfiguration domain = entityMapper.toDomain(entity);
 
-        if (req.action() == RiskFactorAction.ACTIVATE) {
-            ensureNoActiveConflict(domain.getTarget());
-            domain.activate();
-        } else {
-            domain.deactivate();
+        switch (req.action()) {
+            case ACTIVATE ->  {
+                ensureNoActiveConflict(domain.getTarget());
+                domain.activate();
+            }
+        case DEACTIVATE -> domain.deactivate();
         }
 
         entityMapper.updateEntity(domain, entity);

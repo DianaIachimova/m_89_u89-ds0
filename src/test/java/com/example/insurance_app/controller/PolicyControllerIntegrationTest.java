@@ -12,6 +12,7 @@ import com.example.insurance_app.application.dto.client.request.CreateClientRequ
 import com.example.insurance_app.application.dto.client.response.ClientResponse;
 import com.example.insurance_app.application.dto.policy.request.CancelPolicyRequest;
 import com.example.insurance_app.application.dto.policy.request.CreatePolicyRequest;
+import com.example.insurance_app.application.dto.policy.response.PolicyDetailResponse;
 import com.example.insurance_app.application.dto.policy.response.PolicyResponse;
 import com.example.insurance_app.application.exception.PolicyNotFoundException;
 import com.example.insurance_app.application.service.BuildingService;
@@ -201,14 +202,18 @@ class PolicyControllerIntegrationTest {
     class QueryTests {
 
         @Test
-        @DisplayName("Should get policy by ID")
+        @DisplayName("Should get policy by ID with currency details")
         void getById() {
             PolicyResponse draft = policyService.createDraft(validCreateRequest());
-            PolicyResponse fetched = policyService.getById(draft.id());
+            PolicyDetailResponse fetched = policyService.getById(draft.id());
 
             assertEquals(draft.id(), fetched.id());
             assertEquals(draft.policyNumber(), fetched.policyNumber());
             assertEquals(draft.basePremium(), fetched.basePremium());
+            assertNotNull(fetched.currency());
+            assertEquals("RON", fetched.currency().code());
+            assertNotNull(fetched.currency().name());
+            assertNotNull(fetched.currency().id());
         }
 
         @Test

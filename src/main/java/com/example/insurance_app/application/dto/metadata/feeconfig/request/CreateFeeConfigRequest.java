@@ -21,7 +21,7 @@ public record CreateFeeConfigRequest(
         @NotNull(message = "Percentage is required")
         @Digits(integer = 1, fraction = 4)
         @DecimalMin(value = "0.0", inclusive = false, message = "Percentage must be more then 0")
-        @DecimalMax(value = "0.5", message = "Percentage must be at most 50")
+        @DecimalMax(value = "0.5", message = "Percentage must be at most 0.50")
         BigDecimal percentage,
 
         @NotNull(message = "Effective from is required")

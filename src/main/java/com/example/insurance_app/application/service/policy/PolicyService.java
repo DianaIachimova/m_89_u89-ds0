@@ -3,6 +3,7 @@ package com.example.insurance_app.application.service.policy;
 import com.example.insurance_app.application.dto.PageDto;
 import com.example.insurance_app.application.dto.policy.request.CancelPolicyRequest;
 import com.example.insurance_app.application.dto.policy.request.CreatePolicyRequest;
+import com.example.insurance_app.application.dto.policy.response.PolicyDetailResponse;
 import com.example.insurance_app.application.dto.policy.response.PolicyResponse;
 import com.example.insurance_app.application.dto.policy.response.PolicySummaryResponse;
 import com.example.insurance_app.application.exception.PolicyNotFoundException;
@@ -24,10 +25,14 @@ import com.example.insurance_app.infrastructure.persistence.entity.building.Buil
 import com.example.insurance_app.infrastructure.persistence.entity.building.RiskIndicatorsEmbeddable;
 import com.example.insurance_app.infrastructure.persistence.entity.client.ClientEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.geography.CityEntity;
+import com.example.insurance_app.infrastructure.persistence.entity.geography.CountryEntity;
+import com.example.insurance_app.infrastructure.persistence.entity.geography.CountyEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.CurrencyEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.policy.PolicyEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.policy.PolicyPricingSnapshotEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.policy.PolicyPricingSnapshotItemEntity;
+import com.example.insurance_app.infrastructure.persistence.mapper.BuildingEntityMapper;
+import com.example.insurance_app.infrastructure.persistence.mapper.ClientEntityMapper;
 import com.example.insurance_app.infrastructure.persistence.mapper.PolicyEntityMapper;
 import com.example.insurance_app.infrastructure.persistence.repository.policy.PolicyPricingSnapshotRepository;
 import com.example.insurance_app.infrastructure.persistence.repository.policy.PolicyRepository;
@@ -56,6 +61,8 @@ public class PolicyService {
     private final PolicyEntityMapper entityMapper;
     private final PolicyDtoMapper dtoMapper;
     private final PolicyNumberGenerator numberGenerator;
+    private final ClientEntityMapper clientEntityMapper;
+    private final BuildingEntityMapper buildingEntityMapper;
 
     public PolicyService(PolicyRepository policyRepo,
                          PolicyPricingSnapshotRepository snapshotRepo,
@@ -63,7 +70,9 @@ public class PolicyService {
                          PremiumCalculator premiumCalculator,
                          PolicyEntityMapper entityMapper,
                          PolicyDtoMapper dtoMapper,
-                         PolicyNumberGenerator numberGenerator) {
+                         PolicyNumberGenerator numberGenerator,
+                         ClientEntityMapper clientEntityMapper,
+                         BuildingEntityMapper buildingEntityMapper) {
         this.policyRepo = policyRepo;
         this.snapshotRepo = snapshotRepo;
         this.refRepos = refRepos;
@@ -71,6 +80,8 @@ public class PolicyService {
         this.entityMapper = entityMapper;
         this.dtoMapper = dtoMapper;
         this.numberGenerator = numberGenerator;
+        this.clientEntityMapper = clientEntityMapper;
+        this.buildingEntityMapper = buildingEntityMapper;
     }
 
     @Transactional
@@ -82,15 +93,10 @@ public class PolicyService {
         BrokerEntity broker = refRepos.requireBroker(req.brokerId());
         CurrencyEntity currency = refRepos.requireCurrency(req.currencyId());
 
-        DomainAssertions.check(
-                "ACTIVE".equals(broker.getStatus()),
-                "Broker is not active");
-        DomainAssertions.check(
-                building.getOwner().getId().equals(req.clientId()),
+        DomainAssertions.check("ACTIVE".equals(broker.getStatus()), "Broker is not active");
+        DomainAssertions.check(building.getOwner().getId().equals(req.clientId()),
                 "Building does not belong to the specified client");
-        DomainAssertions.check(
-                currency.isActive(),
-                "Currency is not active");
+        DomainAssertions.check(currency.isActive(), "Currency is not active");
 
         BuildingPricingContext ctx = buildPricingContext(building);
         PremiumCalculationResult calc = premiumCalculator.calculate(
@@ -185,11 +191,27 @@ public class PolicyService {
     }
 
     @Transactional(readOnly = true)
-    public PolicyResponse getById(UUID policyId) {
+    public PolicyDetailResponse getById(UUID policyId) {
         logger.info("Fetching policy id={}", policyId);
         PolicyEntity entity = requirePolicy(policyId);
         Policy domain = entityMapper.toDomain(entity);
-        return dtoMapper.toResponse(domain, entity.getCurrency().getCode());
+
+        ClientEntity clientEntity = entity.getClient();
+        BuildingEntity buildingEntity = entity.getBuilding();
+        CityEntity city = buildingEntity.getCity();
+        CountyEntity county = city.getCounty();
+        CountryEntity country = county.getCountry();
+
+        return dtoMapper.toDetailResponse(
+                domain,
+                entity.getCurrency(),
+                clientEntityMapper.toDomain(clientEntity),
+                clientEntity,
+                buildingEntityMapper.toDomain(buildingEntity),
+                city,
+                county,
+                country
+        );
     }
 
     private void persistSnapshot(PolicyEntity policy,

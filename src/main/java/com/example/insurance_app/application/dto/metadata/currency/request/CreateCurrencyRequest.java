@@ -10,7 +10,7 @@ public record CreateCurrencyRequest(
         String code,
 
         @NotBlank(message = "Currency name is required")
-        @Size(min = 3, max = 100, message = "Currency name must be between 1 and 100 characters")
+        @Size(min = 3, max = 100, message = "Currency name must be between 3 and 100 characters")
         String name,
 
         @NotNull(message = "Exchange rate to base is required")
