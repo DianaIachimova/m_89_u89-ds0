@@ -40,7 +40,7 @@ public class BrokerEntity {
     @Column(name = "status", nullable = false, length = 10)
     private String status;
 
-    @Column(name = "commission_percentage", precision = 5, scale = 2)
+    @Column(name = "commission_percentage", precision = 5, scale = 4)
     private BigDecimal commissionPercentage;
 
     @CreatedDate

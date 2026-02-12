@@ -56,11 +56,11 @@ class BrokerServiceTest {
         brokerId = UUID.randomUUID();
         createRequest = new CreateBrokerRequest(
                 "BRK-001", "Test Broker", "broker@test.com",
-                "+40712345678", new BigDecimal("5.00"), true
+                "+40712345678", new BigDecimal("0.05"), true
         );
         updateRequest = new UpdateBrokerRequest(
                 "Updated Broker", "updated@test.com",
-                "+40712345679", new BigDecimal("10.00")
+                "+40712345679", new BigDecimal("0.1")
         );
     }
 

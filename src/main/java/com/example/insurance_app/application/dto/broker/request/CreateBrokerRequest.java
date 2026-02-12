@@ -20,6 +20,8 @@ public record CreateBrokerRequest(
         @Pattern(regexp = "^\\+?\\d{10,15}$", message = "Phone must be a valid phone number")
         String phone,
 
+        @DecimalMin(value = "0.0", inclusive = false, message = "Percentage must be more then 0")
+        @DecimalMax(value = "1.0", message = "Percentage must be at most 1.0")
         BigDecimal commissionPercentage,
 
         @NotNull(message = "Active flag is required")

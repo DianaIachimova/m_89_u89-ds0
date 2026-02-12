@@ -26,7 +26,7 @@ class BrokerTest {
             new EmailAddress("broker@test.com"),
             new PhoneNumber("+40712345678")
     );
-    private static final CommissionPercentage COMMISSION = new CommissionPercentage(new BigDecimal("5.00"));
+    private static final CommissionPercentage COMMISSION = new CommissionPercentage(new BigDecimal("0.05"));
 
     private Broker createActiveBroker() {
         return Broker.createNew(CODE, NAME, CONTACT, BrokerStatus.ACTIVE, COMMISSION);
@@ -169,7 +169,7 @@ class BrokerTest {
             ContactInfo newContact = new ContactInfo(
                     new EmailAddress("updated@test.com"), null
             );
-            CommissionPercentage newCommission = new CommissionPercentage(new BigDecimal("10.00"));
+            CommissionPercentage newCommission = new CommissionPercentage(new BigDecimal("0.1"));
 
             broker.updateDetails(newName, newContact, newCommission);
 

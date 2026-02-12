@@ -53,6 +53,7 @@ public class Policy {
     }
 
     public void activate(PremiumAmount recalculatedFinalPremium) {
+        //if(status == PolicyStatus.ACTIVE) return;
         DomainAssertions.check(status == PolicyStatus.DRAFT,
                 "Only DRAFT policies can be activated");
         DomainAssertions.check(!period.startDate().isBefore(LocalDate.now()),
@@ -63,6 +64,7 @@ public class Policy {
     }
 
     public void cancel(String reason) {
+        //if(status == PolicyStatus.CANCELLED) return;
         DomainAssertions.check(status == PolicyStatus.ACTIVE,
                 "Only ACTIVE policies can be cancelled");
         this.status = PolicyStatus.CANCELLED;

@@ -66,7 +66,7 @@ class BrokerControllerIntegrationTest {
         void shouldCreateBroker() {
             CreateBrokerRequest request = new CreateBrokerRequest(
                     "BRK-NEW-001", "New Broker", "newbroker@test.com",
-                    "+40712345680", new BigDecimal("7.50"), true
+                    "+40712345680", new BigDecimal("0.75"), true
             );
 
             BrokerResponse response = brokerService.create(request);
@@ -113,7 +113,7 @@ class BrokerControllerIntegrationTest {
             UUID brokerId = UUID.fromString("b0b0b0b0-0000-4000-a000-000000000001");
             UpdateBrokerRequest request = new UpdateBrokerRequest(
                     "Updated Broker Name", "updated.broker@test.com",
-                    "+40799999999", new BigDecimal("12.00")
+                    "+40799999999", new BigDecimal("0.12")
             );
 
             BrokerResponse response = brokerService.update(brokerId, request);
@@ -188,7 +188,7 @@ class BrokerControllerIntegrationTest {
         void shouldRejectPolicyWithDeactivatedBroker() {
             BrokerResponse broker = brokerService.create(new CreateBrokerRequest(
                     "BRK-DEACT-001", "Deactivation Test Broker", "deact@test.com",
-                    "+40712345681", new BigDecimal("5.00"), true
+                    "+40712345681", new BigDecimal("0.05"), true
             ));
 
             brokerService.deactivate(broker.id());

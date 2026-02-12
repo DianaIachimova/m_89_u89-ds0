@@ -106,7 +106,7 @@ class CurrencyServiceTest {
 
             when(currencyRepository.findById(id)).thenReturn(Optional.of(entity));
             when(currencyEntityMapper.toDomain(entity)).thenReturn(domain, updated);
-            when(currencyRepository.save(entity)).thenReturn(entity);
+            when(currencyRepository.saveAndFlush(entity)).thenReturn(entity);
             when(currencyDtoMapper.toResponse(updated)).thenReturn(response);
 
             CurrencyResponse result = currencyService.executeAction(id, new CurrencyActionRequest(CurrencyAction.ACTIVATE));
@@ -126,7 +126,7 @@ class CurrencyServiceTest {
             when(currencyRepository.findById(id)).thenReturn(Optional.of(entity));
             when(currencyEntityMapper.toDomain(entity)).thenReturn(domain, updated);
             when(policyRepository.existsByStatusAndCurrencyId(PolicyStatusEntity.ACTIVE, id)).thenReturn(false);
-            when(currencyRepository.save(entity)).thenReturn(entity);
+            when(currencyRepository.saveAndFlush(entity)).thenReturn(entity);
             when(currencyDtoMapper.toResponse(updated)).thenReturn(response);
 
             CurrencyResponse result = currencyService.executeAction(id, new CurrencyActionRequest(CurrencyAction.DEACTIVATE));
