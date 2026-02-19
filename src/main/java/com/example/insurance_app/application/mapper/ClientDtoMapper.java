@@ -4,10 +4,7 @@ import com.example.insurance_app.application.dto.client.ClientTypeDto;
 import com.example.insurance_app.application.dto.client.request.AddressRequest;
 import com.example.insurance_app.application.dto.client.request.ContactInfoRequest;
 import com.example.insurance_app.application.dto.client.request.CreateClientRequest;
-import com.example.insurance_app.application.dto.client.response.AddressResponse;
-import com.example.insurance_app.application.dto.client.response.ClientResponse;
-import com.example.insurance_app.application.dto.client.response.ContactInfoResponse;
-import com.example.insurance_app.application.dto.client.response.IdentificationNumberChangeDto;
+import com.example.insurance_app.application.dto.client.response.*;
 import com.example.insurance_app.domain.model.client.vo.Address;
 import com.example.insurance_app.domain.model.client.Client;
 import com.example.insurance_app.domain.model.client.ClientType;
@@ -60,6 +57,22 @@ public class ClientDtoMapper {
                 entity.getCreatedAt(),
                 entity.getUpdatedAt(),
                 historyDto
+        );
+    }
+
+
+    public ClientRefResponse toRefResponse(Client domain) {
+        if (domain == null) {
+            return null;
+        }
+
+        return new ClientRefResponse(
+                domain.getId() != null ? domain.getId().value() : null,
+                toClientTypeDto(domain.getClientType()),
+                domain.getName(),
+                domain.getIdentificationNumber(),
+                toContactInfoResponse(domain.getContactInfo()),
+                toAddressResponse(domain.getAddress())
         );
     }
 

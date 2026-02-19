@@ -16,12 +16,13 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.Predicate;
 
 @Component
 public class PremiumCalculator {
 
-    private static final Map<String, Function<RiskIndicators, Boolean>> RISK_INDICATOR_MAP = Map.of(
+    private static final int MONEY_SCALE = 2;
+    private static final Map<String, Predicate<RiskIndicators>> RISK_INDICATOR_MAP = Map.of(
             "EARTHQUAKE_ZONE", RiskIndicators::earthquakeZone,
             "FLOOD_ZONE", RiskIndicators::floodZone
     );
@@ -36,19 +37,21 @@ public class PremiumCalculator {
     }
 
     public PremiumCalculationResult calculate(BigDecimal basePremium,
-                                               BuildingPricingContext building,
+                                               PricingContext context,
                                                LocalDate policyStartDate) {
+
         List<AppliedAdjustment> adjustments = new ArrayList<>();
 
-        BigDecimal riskPct = collectRiskFactors(building, adjustments);
+        BigDecimal brokerPct = collectBrokerCommission(context, adjustments);
+        BigDecimal riskPct = collectRiskFactors(context, adjustments);
         BigDecimal baseFeesPct = collectBaseFees(policyStartDate, adjustments);
         BigDecimal riskAdjFeesPct = collectRiskAdjustmentFees(
-                policyStartDate, building.riskIndicators(), adjustments);
+                policyStartDate, context.riskIndicators(), adjustments);
 
-        BigDecimal totalPct = riskPct.add(baseFeesPct).add(riskAdjFeesPct);
+        BigDecimal totalPct = brokerPct.add(riskPct).add(baseFeesPct).add(riskAdjFeesPct);
         BigDecimal finalPremium = basePremium
                 .multiply(BigDecimal.ONE.add(totalPct))
-                .setScale(2, RoundingMode.HALF_UP);
+                .setScale(MONEY_SCALE, RoundingMode.HALF_UP);
 
         DomainAssertions.check(finalPremium.compareTo(BigDecimal.ZERO) > 0,
                 "Calculated final premium must be positive");
@@ -56,13 +59,28 @@ public class PremiumCalculator {
         return new PremiumCalculationResult(finalPremium, List.copyOf(adjustments));
     }
 
-    private BigDecimal collectRiskFactors(BuildingPricingContext building,
-                                           List<AppliedAdjustment> out) {
+    private BigDecimal collectBrokerCommission(PricingContext context,
+                                              List<AppliedAdjustment> out) {
+
+        BigDecimal brokerCommission = context.brokerCommissionPercentage();
+        if (brokerCommission == null)
+            return BigDecimal.ZERO;
+
+        out.add(new AppliedAdjustment(
+                "BROKER_COMMISSION",
+                context.brokerId(),
+                "Broker commission",
+                brokerCommission));
+        return brokerCommission;
+    }
+
+    private BigDecimal collectRiskFactors(PricingContext context,
+                                          List<AppliedAdjustment> out) {
         var all = riskRepo.findAllActiveByTargets(
-                building.countryId(),
-                building.countyId(),
-                building.cityId(),
-                building.buildingType());
+                context.countryId(),
+                context.countyId(),
+                context.cityId(),
+                context.buildingType());
 
         all.sort(Comparator
                 .comparing(RiskFactorConfigurationEntity::getLevel)
@@ -112,7 +130,7 @@ public class PremiumCalculator {
         BigDecimal sum = BigDecimal.ZERO;
         for (var fee : riskFees) {
             var extractor = RISK_INDICATOR_MAP.get(fee.getCode());
-            if (extractor != null && Boolean.TRUE.equals(extractor.apply(indicators))) {
+            if (extractor != null && extractor.test(indicators)) {
                 sum = sum.add(fee.getPercentage());
                 out.add(new AppliedAdjustment(
                         "FEE_RISK_ADJUSTMENT",

@@ -232,7 +232,8 @@ class BrokerControllerIntegrationTest {
         @Test
         @DisplayName("Should throw when broker not found")
         void notFound() {
-            assertThrows(ResourceNotFoundException.class, () -> brokerService.getById(UUID.randomUUID()));
+            UUID id =   UUID.randomUUID();
+            assertThrows(ResourceNotFoundException.class, () -> brokerService.getById(id));
         }
 
         @Test

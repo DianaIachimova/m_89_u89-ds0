@@ -1,8 +1,8 @@
 package com.example.insurance_app.application.mapper;
 
 import com.example.insurance_app.application.dto.building.response.BuildingDetailedResponse;
-import com.example.insurance_app.application.dto.client.response.ClientResponse;
-import com.example.insurance_app.application.dto.metadata.currency.response.CurrencyResponse;
+import com.example.insurance_app.application.dto.client.response.ClientRefResponse;
+import com.example.insurance_app.application.dto.metadata.currency.response.CurrencyRefResponse;
 import com.example.insurance_app.application.dto.policy.response.PolicyDetailResponse;
 import com.example.insurance_app.application.dto.policy.response.PolicyResponse;
 import com.example.insurance_app.application.dto.policy.response.PolicySummaryResponse;
@@ -12,13 +12,10 @@ import com.example.insurance_app.domain.model.policy.Policy;
 import com.example.insurance_app.infrastructure.persistence.entity.geography.CityEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.geography.CountryEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.geography.CountyEntity;
-import com.example.insurance_app.infrastructure.persistence.entity.client.ClientEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.CurrencyEntity;
-import com.example.insurance_app.infrastructure.persistence.entity.policy.PolicyEntity;
 import com.example.insurance_app.infrastructure.persistence.mapper.CurrencyEntityMapper;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 
 @Component
 public class PolicyDtoMapper {
@@ -59,35 +56,34 @@ public class PolicyDtoMapper {
         );
     }
 
-    public PolicySummaryResponse toSummaryResponse(PolicyEntity entity) {
-        if (entity == null) return null;
+    public PolicySummaryResponse toSummaryResponse(Policy domain, String currencyCode) {
+        if (domain == null) return null;
 
         return new PolicySummaryResponse(
-                entity.getId(),
-                entity.getPolicyNumber(),
-                entity.getStatus().name(),
-                entity.getClient().getId(),
-                entity.getStartDate(),
-                entity.getEndDate(),
-                entity.getFinalPremium(),
-                entity.getCurrency().getCode()
+                domain.getId() != null ? domain.getId().value() : null,
+                domain.getPolicyNumber().value(),
+                domain.getStatus().name(),
+                domain.getReferences().clientId().value(),
+                domain.getPeriod().startDate(),
+                domain.getPeriod().endDate(),
+                domain.getFinalPremium().value(),
+                currencyCode
         );
     }
 
     public PolicyDetailResponse toDetailResponse(Policy domain,
                                                  CurrencyEntity currencyEntity,
                                                  Client clientDomain,
-                                                 ClientEntity clientEntity,
                                                  Building buildingDomain,
                                                  CityEntity city,
                                                  CountyEntity county,
                                                  CountryEntity country) {
         if (domain == null) return null;
 
-        ClientResponse clientResponse = clientDtoMapper.toResponse(clientDomain, clientEntity, List.of());
+        ClientRefResponse clientResponse = clientDtoMapper.toRefResponse(clientDomain);
         BuildingDetailedResponse buildingResponse = buildingResponseMapper.toDetailedResponse(
                 buildingDomain, city, county, country);
-        CurrencyResponse currencyResponse = currencyDtoMapper.toResponse(currencyEntityMapper.toDomain(currencyEntity));
+        CurrencyRefResponse currencyResponse = currencyDtoMapper.toRefResponse(currencyEntityMapper.toDomain(currencyEntity));
 
         return new PolicyDetailResponse(
                 domain.getId() != null ? domain.getId().value() : null,

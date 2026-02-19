@@ -10,6 +10,7 @@ import com.example.insurance_app.application.mapper.PolicyDtoMapper;
 import com.example.insurance_app.application.service.policy.PolicyNumberGenerator;
 import com.example.insurance_app.application.service.policy.PolicyReferenceRepositories;
 import com.example.insurance_app.application.service.policy.PolicyService;
+import com.example.insurance_app.application.service.policy.PolicySupportDeps;
 import com.example.insurance_app.application.service.policy.pricing.PremiumCalculationResult;
 import com.example.insurance_app.application.service.policy.pricing.PremiumCalculator;
 import com.example.insurance_app.domain.exception.DomainValidationException;
@@ -26,6 +27,7 @@ import com.example.insurance_app.infrastructure.persistence.entity.geography.Cou
 import com.example.insurance_app.infrastructure.persistence.entity.geography.CountyEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.CurrencyEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.policy.PolicyEntity;
+import com.example.insurance_app.infrastructure.persistence.entity.policy.PolicyStatusEntity;
 import com.example.insurance_app.infrastructure.persistence.mapper.BuildingEntityMapper;
 import com.example.insurance_app.infrastructure.persistence.mapper.ClientEntityMapper;
 import com.example.insurance_app.infrastructure.persistence.mapper.PolicyEntityMapper;
@@ -36,11 +38,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -48,6 +52,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.lenient;
 
@@ -73,6 +78,8 @@ class PolicyServiceTest {
     private ClientEntityMapper clientEntityMapper;
     @Mock
     private BuildingEntityMapper buildingEntityMapper;
+    @Mock
+    private PolicySupportDeps support;
 
     @InjectMocks
     private PolicyService policyService;
@@ -91,6 +98,10 @@ class PolicyServiceTest {
         brokerId = UUID.randomUUID();
         currencyId = UUID.randomUUID();
         policyId = UUID.randomUUID();
+
+        lenient().when(support.clientEntityMapper()).thenReturn(clientEntityMapper);
+        lenient().when(support.buildingEntityMapper()).thenReturn(buildingEntityMapper);
+        lenient().when(support.numberGenerator()).thenReturn(numberGenerator);
 
         createRequest = new CreatePolicyRequest(
                 clientId, buildingId, brokerId, currencyId,
@@ -263,8 +274,12 @@ class PolicyServiceTest {
             CurrencyEntity currency = mock(CurrencyEntity.class);
             BuildingInfoEmbeddable buildingInfo = mock(BuildingInfoEmbeddable.class);
 
+            BrokerEntity broker = mock(BrokerEntity.class);
+            when(broker.getCommissionPercentage()).thenReturn(null);
+
             when(policyRepo.findById(policyId)).thenReturn(Optional.of(entity));
             when(entity.getBuilding()).thenReturn(building);
+            when(entity.getBroker()).thenReturn(broker);
             when(entity.getCurrency()).thenReturn(currency);
             when(currency.getCode()).thenReturn("RON");
             when(building.getCity()).thenReturn(city);
@@ -368,13 +383,13 @@ class PolicyServiceTest {
             when(county.getCountry()).thenReturn(country);
             when(clientEntityMapper.toDomain(clientEntity)).thenReturn(clientDomain);
             when(buildingEntityMapper.toDomain(buildingEntity)).thenReturn(buildingDomain);
-            when(dtoMapper.toDetailResponse(domain, currency, clientDomain, clientEntity,
+            when(dtoMapper.toDetailResponse(domain, currency, clientDomain,
                     buildingDomain, city, county, country)).thenReturn(detailResponse);
 
             PolicyDetailResponse result = policyService.getById(policyId);
 
             assertNotNull(result);
-            verify(dtoMapper).toDetailResponse(domain, currency, clientDomain, clientEntity,
+            verify(dtoMapper).toDetailResponse(domain, currency, clientDomain,
                     buildingDomain, city, county, country);
         }
 
@@ -384,6 +399,39 @@ class PolicyServiceTest {
             when(policyRepo.findById(policyId)).thenReturn(Optional.empty());
 
             assertThrows(PolicyNotFoundException.class, () -> policyService.getById(policyId));
+        }
+    }
+
+    @Nested
+    @DisplayName("expireOverduePolicies")
+    class ExpireOverduePolicies {
+
+        @Test
+        @DisplayName("Should return 0 when no overdue policies")
+        void shouldReturnZeroWhenNoOverduePolicies() {
+            when(policyRepo.markActiveOverdueAsExpired(any(), any(), any(LocalDate.class), any(Instant.class)))
+                    .thenReturn(0);
+
+            int result = policyService.expire();
+
+            assertEquals(0, result);
+            verify(policyRepo).markActiveOverdueAsExpired(
+                    eq(PolicyStatusEntity.ACTIVE), eq(PolicyStatusEntity.EXPIRED), any(LocalDate.class), any(Instant.class));
+        }
+
+        @Test
+        @DisplayName("Should return count and pass ACTIVE/EXPIRED when N policies expired")
+        void shouldReturnCountWhenPoliciesExpired() {
+            when(policyRepo.markActiveOverdueAsExpired(any(), any(), any(LocalDate.class), any(Instant.class)))
+                    .thenReturn(3);
+
+            int result = policyService.expire();
+
+            assertEquals(3, result);
+            ArgumentCaptor<LocalDate> todayCaptor = ArgumentCaptor.forClass(LocalDate.class);
+            verify(policyRepo).markActiveOverdueAsExpired(
+                    eq(PolicyStatusEntity.ACTIVE), eq(PolicyStatusEntity.EXPIRED), todayCaptor.capture(), any(Instant.class));
+            assertEquals(LocalDate.now(), todayCaptor.getValue());
         }
     }
 }

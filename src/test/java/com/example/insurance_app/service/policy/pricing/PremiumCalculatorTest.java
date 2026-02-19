@@ -1,6 +1,7 @@
 package com.example.insurance_app.service.policy.pricing;
 
-import com.example.insurance_app.application.service.policy.pricing.BuildingPricingContext;
+import com.example.insurance_app.application.service.policy.pricing.AppliedAdjustment;
+import com.example.insurance_app.application.service.policy.pricing.PricingContext;
 import com.example.insurance_app.application.service.policy.pricing.PremiumCalculationResult;
 import com.example.insurance_app.application.service.policy.pricing.PremiumCalculator;
 import com.example.insurance_app.domain.model.building.vo.RiskIndicators;
@@ -26,8 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -48,10 +48,19 @@ class PremiumCalculatorTest {
     private static final UUID COUNTRY_ID = UUID.randomUUID();
     private static final UUID COUNTY_ID = UUID.randomUUID();
     private static final UUID CITY_ID = UUID.randomUUID();
+    private static final UUID BROKER_ID = UUID.randomUUID();
     private static final LocalDate POLICY_START = LocalDate.of(2026, 6, 1);
 
-    private BuildingPricingContext buildContext(RiskIndicators riskIndicators) {
-        return new BuildingPricingContext(COUNTRY_ID, COUNTY_ID, CITY_ID, BuildingTypeEntity.RESIDENTIAL, riskIndicators);
+    private PricingContext buildContext(RiskIndicators riskIndicators) {
+        return buildContext(riskIndicators, null, BROKER_ID);
+    }
+
+    private PricingContext buildContext(RiskIndicators riskIndicators,
+                                        BigDecimal brokerCommissionPct,
+                                        UUID brokerId) {
+        return new PricingContext(
+                COUNTRY_ID, COUNTY_ID, CITY_ID, BuildingTypeEntity.RESIDENTIAL, riskIndicators,
+                brokerId, brokerCommissionPct);
     }
 
     private RiskFactorConfigurationEntity riskFactor(BigDecimal pct) {
@@ -87,7 +96,7 @@ class PremiumCalculatorTest {
             stubEmptyRepos();
             when(feeRepo.findActiveOnDateByType(any(), eq(FeeConfigTypeEntity.RISK_ADJUSTMENT))).thenReturn(new ArrayList<>());
 
-            BuildingPricingContext ctx = buildContext(new RiskIndicators(false, false));
+            PricingContext ctx = buildContext(new RiskIndicators(false, false));
             PremiumCalculationResult result = premiumCalculator.calculate(new BigDecimal("1000.00"), ctx, POLICY_START);
 
             assertEquals(new BigDecimal("1000.00"), result.finalPremium());
@@ -107,7 +116,7 @@ class PremiumCalculatorTest {
                     .thenReturn(new ArrayList<>(List.of(baseFee("ADMIN_FEE", "Admin Fee", new BigDecimal("0.1000")))));
             when(feeRepo.findActiveOnDateByType(any(), eq(FeeConfigTypeEntity.RISK_ADJUSTMENT))).thenReturn(new ArrayList<>());
 
-            BuildingPricingContext ctx = buildContext(new RiskIndicators(false, false));
+            PricingContext ctx = buildContext(new RiskIndicators(false, false));
             PremiumCalculationResult result = premiumCalculator.calculate(new BigDecimal("1000.00"), ctx, POLICY_START);
 
             assertEquals(new BigDecimal("1100.00"), result.finalPremium());
@@ -129,7 +138,7 @@ class PremiumCalculatorTest {
             when(feeRepo.findActiveOnDateExcludingType(any(), eq(FeeConfigTypeEntity.RISK_ADJUSTMENT))).thenReturn(new ArrayList<>());
             when(feeRepo.findActiveOnDateByType(any(), eq(FeeConfigTypeEntity.RISK_ADJUSTMENT))).thenReturn(new ArrayList<>());
 
-            BuildingPricingContext ctx = buildContext(new RiskIndicators(false, false));
+            PricingContext ctx = buildContext(new RiskIndicators(false, false));
             PremiumCalculationResult result = premiumCalculator.calculate(new BigDecimal("1000.00"), ctx, POLICY_START);
 
             assertEquals(new BigDecimal("1080.00"), result.finalPremium());
@@ -149,7 +158,7 @@ class PremiumCalculatorTest {
             when(feeRepo.findActiveOnDateByType(any(), eq(FeeConfigTypeEntity.RISK_ADJUSTMENT)))
                     .thenReturn(new ArrayList<>(List.of(riskAdjFee("FLOOD_ZONE", "Flood Zone Fee", new BigDecimal("0.0500")))));
 
-            BuildingPricingContext ctx = buildContext(new RiskIndicators(true, false));
+            PricingContext ctx = buildContext(new RiskIndicators(true, false));
             PremiumCalculationResult result = premiumCalculator.calculate(new BigDecimal("1000.00"), ctx, POLICY_START);
 
             assertEquals(new BigDecimal("1050.00"), result.finalPremium());
@@ -165,7 +174,7 @@ class PremiumCalculatorTest {
             when(feeRepo.findActiveOnDateByType(any(), eq(FeeConfigTypeEntity.RISK_ADJUSTMENT)))
                     .thenReturn(new ArrayList<>(List.of(riskAdjFee("EARTHQUAKE_ZONE", "Earthquake Fee", new BigDecimal("0.0800")))));
 
-            BuildingPricingContext ctx = buildContext(new RiskIndicators(false, true));
+            PricingContext ctx = buildContext(new RiskIndicators(false, true));
             PremiumCalculationResult result = premiumCalculator.calculate(new BigDecimal("1000.00"), ctx, POLICY_START);
 
             assertEquals(new BigDecimal("1080.00"), result.finalPremium());
@@ -179,7 +188,7 @@ class PremiumCalculatorTest {
             when(feeRepo.findActiveOnDateByType(any(), eq(FeeConfigTypeEntity.RISK_ADJUSTMENT)))
                     .thenReturn(new ArrayList<>(List.of(riskAdjFee("FLOOD_ZONE", "Flood Zone Fee", new BigDecimal("0.0500")))));
 
-            BuildingPricingContext ctx = buildContext(new RiskIndicators(false, false));
+            PricingContext ctx = buildContext(new RiskIndicators(false, false));
             PremiumCalculationResult result = premiumCalculator.calculate(new BigDecimal("1000.00"), ctx, POLICY_START);
 
             assertEquals(new BigDecimal("1000.00"), result.finalPremium());
@@ -192,7 +201,7 @@ class PremiumCalculatorTest {
             when(riskRepo.findAllActiveByTargets(any(), any(), any(), any())).thenReturn(new ArrayList<>());
             when(feeRepo.findActiveOnDateExcludingType(any(), eq(FeeConfigTypeEntity.RISK_ADJUSTMENT))).thenReturn(new ArrayList<>());
 
-            BuildingPricingContext ctx = buildContext(null);
+            PricingContext ctx = buildContext(null);
             PremiumCalculationResult result = premiumCalculator.calculate(new BigDecimal("1000.00"), ctx, POLICY_START);
 
             assertEquals(new BigDecimal("1000.00"), result.finalPremium());
@@ -214,7 +223,7 @@ class PremiumCalculatorTest {
             when(feeRepo.findActiveOnDateByType(any(), eq(FeeConfigTypeEntity.RISK_ADJUSTMENT)))
                     .thenReturn(new ArrayList<>(List.of(riskAdjFee("FLOOD_ZONE", "Flood Zone Fee", new BigDecimal("0.0200")))));
 
-            BuildingPricingContext ctx = buildContext(new RiskIndicators(true, false));
+            PricingContext ctx = buildContext(new RiskIndicators(true, false));
 
             // total = 0.03 + 0.05 + 0.02 = 0.10
             // final = 1000 * 1.10 = 1100.00
@@ -237,7 +246,7 @@ class PremiumCalculatorTest {
                     .thenReturn(new ArrayList<>(List.of(baseFee("ADMIN_FEE", "Admin Fee", new BigDecimal("0.0333")))));
             when(feeRepo.findActiveOnDateByType(any(), eq(FeeConfigTypeEntity.RISK_ADJUSTMENT))).thenReturn(new ArrayList<>());
 
-            BuildingPricingContext ctx = buildContext(new RiskIndicators(false, false));
+            PricingContext ctx = buildContext(new RiskIndicators(false, false));
 
             // 999.99 * 1.0333 = 1033.2867... -> 1033.29
             PremiumCalculationResult result = premiumCalculator.calculate(new BigDecimal("999.99"), ctx, POLICY_START);
@@ -254,10 +263,79 @@ class PremiumCalculatorTest {
             stubEmptyRepos();
             when(feeRepo.findActiveOnDateByType(any(), eq(FeeConfigTypeEntity.RISK_ADJUSTMENT))).thenReturn(new ArrayList<>());
 
-            BuildingPricingContext ctx = buildContext(new RiskIndicators(false, false));
+            PricingContext ctx = buildContext(new RiskIndicators(false, false));
             PremiumCalculationResult result = premiumCalculator.calculate(new BigDecimal("5000.00"), ctx, POLICY_START);
 
             assertEquals(new BigDecimal("5000.00"), result.finalPremium());
+        }
+    }
+
+    @Nested
+    @DisplayName("Broker commission")
+    class BrokerCommissionTests {
+
+        @Test
+        @DisplayName("Broker commission null -> no broker adjustment; final premium equals no-commission result")
+        void brokerCommissionNullNoAdjustment() {
+            stubEmptyRepos();
+            when(feeRepo.findActiveOnDateByType(any(), eq(FeeConfigTypeEntity.RISK_ADJUSTMENT))).thenReturn(new ArrayList<>());
+
+            PricingContext ctxNoBroker = buildContext(new RiskIndicators(false, false));
+            PremiumCalculationResult resultNoBroker = premiumCalculator.calculate(new BigDecimal("1000.00"), ctxNoBroker, POLICY_START);
+
+            PricingContext ctxWithNullCommission = buildContext(new RiskIndicators(false, false), null, BROKER_ID);
+            PremiumCalculationResult result = premiumCalculator.calculate(new BigDecimal("1000.00"), ctxWithNullCommission, POLICY_START);
+
+            assertNoBrokerAdjustment(result);
+            assertEquals(resultNoBroker.finalPremium(), result.finalPremium());
+            assertEquals(new BigDecimal("1000.00"), result.finalPremium());
+        }
+
+        @Test
+        @DisplayName("Broker commission present (5%) -> one BROKER_COMMISSION adjustment, final = base * (1 + 0.05)")
+        void brokerCommissionPresent() {
+            stubEmptyRepos();
+            when(feeRepo.findActiveOnDateByType(any(), eq(FeeConfigTypeEntity.RISK_ADJUSTMENT))).thenReturn(new ArrayList<>());
+
+            UUID brokerId = UUID.randomUUID();
+            BigDecimal brokerPct = new BigDecimal("0.05");
+            PricingContext ctx = buildContext(new RiskIndicators(false, false), brokerPct, brokerId);
+            PremiumCalculationResult result = premiumCalculator.calculate(new BigDecimal("1000.00"), ctx, POLICY_START);
+
+            assertBrokerAdjustment(result, brokerPct, brokerId, new BigDecimal("1050.00"));
+        }
+
+        @Test
+        @DisplayName("Broker commission 0 -> adjustment added with 0%, final unchanged from other factors only")
+        void brokerCommissionZero() {
+            stubEmptyRepos();
+            when(feeRepo.findActiveOnDateByType(any(), eq(FeeConfigTypeEntity.RISK_ADJUSTMENT))).thenReturn(new ArrayList<>());
+
+            UUID brokerId = UUID.randomUUID();
+            PricingContext ctx = buildContext(new RiskIndicators(false, false), BigDecimal.ZERO, brokerId);
+            PremiumCalculationResult result = premiumCalculator.calculate(new BigDecimal("1000.00"), ctx, POLICY_START);
+
+            assertBrokerAdjustment(result, BigDecimal.ZERO, brokerId, new BigDecimal("1000.00"));
+        }
+
+        private void assertNoBrokerAdjustment(PremiumCalculationResult result) {
+            boolean hasBroker = result.appliedAdjustments().stream()
+                    .anyMatch(a -> "BROKER_COMMISSION".equals(a.sourceType()));
+            assertFalse(hasBroker, "Expected no BROKER_COMMISSION adjustment");
+        }
+
+        private void assertBrokerAdjustment(PremiumCalculationResult result,
+                                            BigDecimal expectedPct, UUID expectedBrokerId,
+                                            BigDecimal expectedFinalPremium) {
+            List<AppliedAdjustment> brokerAdjs = result.appliedAdjustments().stream()
+                    .filter(a -> "BROKER_COMMISSION".equals(a.sourceType()))
+                    .toList();
+            assertEquals(1, brokerAdjs.size());
+            assertEquals("BROKER_COMMISSION", brokerAdjs.getFirst().sourceType());
+            assertEquals(expectedBrokerId, brokerAdjs.getFirst().sourceId());
+            assertEquals("Broker commission", brokerAdjs.getFirst().name());
+            assertEquals(0, expectedPct.compareTo(brokerAdjs.getFirst().percentage()));
+            assertEquals(0, expectedFinalPremium.compareTo(result.finalPremium()));
         }
     }
 }

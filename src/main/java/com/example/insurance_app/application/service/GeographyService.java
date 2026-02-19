@@ -1,8 +1,8 @@
 package com.example.insurance_app.application.service;
 
-import com.example.insurance_app.application.dto.geogrophy.CityResponse;
-import com.example.insurance_app.application.dto.geogrophy.CountryResponse;
-import com.example.insurance_app.application.dto.geogrophy.CountyResponse;
+import com.example.insurance_app.application.dto.geography.CityResponse;
+import com.example.insurance_app.application.dto.geography.CountryResponse;
+import com.example.insurance_app.application.dto.geography.CountyResponse;
 import com.example.insurance_app.application.exception.ResourceNotFoundException;
 import com.example.insurance_app.infrastructure.persistence.repository.geography.CityRepository;
 import com.example.insurance_app.infrastructure.persistence.repository.geography.CountryRepository;

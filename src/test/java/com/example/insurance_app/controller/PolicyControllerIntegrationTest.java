@@ -128,6 +128,18 @@ class PolicyControllerIntegrationTest {
         }
 
         @Test
+        @DisplayName("Final premium includes broker commission (test-data: admin 5%, risk 2%+1%, flood 3%, broker 5% -> 1160.00)")
+        void finalPremiumIncludesBrokerCommission() {
+            PolicyResponse draft = policyService.createDraft(validCreateRequest());
+            BigDecimal base = new BigDecimal("1000.00");
+            assertEquals(base, draft.basePremium());
+            BigDecimal finalPremium = draft.finalPremium();
+            BigDecimal expected = new BigDecimal("1160.00");
+            assertEquals(0, expected.compareTo(finalPremium),
+                    "Expected base*(1+0.05+0.02+0.01+0.03+0.05)=1160.00 from test-data fees, risk factors, flood zone, broker 5%");
+        }
+
+        @Test
         @DisplayName("Should cancel active policy")
         void shouldCancelActivePolicy() {
             PolicyResponse draft = policyService.createDraft(validCreateRequest());
@@ -219,7 +231,8 @@ class PolicyControllerIntegrationTest {
         @Test
         @DisplayName("Should throw when policy not found")
         void notFound() {
-            assertThrows(PolicyNotFoundException.class, () -> policyService.getById(UUID.randomUUID()));
+            UUID id =  UUID.randomUUID();
+            assertThrows(PolicyNotFoundException.class, () -> policyService.getById(id));
         }
 
         @Test

@@ -9,7 +9,7 @@ import com.example.insurance_app.application.dto.policy.response.PolicySummaryRe
 import com.example.insurance_app.application.exception.PolicyNotFoundException;
 import com.example.insurance_app.application.mapper.PolicyDtoMapper;
 import com.example.insurance_app.application.service.policy.pricing.AppliedAdjustment;
-import com.example.insurance_app.application.service.policy.pricing.BuildingPricingContext;
+import com.example.insurance_app.application.service.policy.pricing.PricingContext;
 import com.example.insurance_app.application.service.policy.pricing.PremiumCalculationResult;
 import com.example.insurance_app.application.service.policy.pricing.PremiumCalculator;
 import com.example.insurance_app.domain.model.broker.vo.BrokerId;
@@ -31,8 +31,7 @@ import com.example.insurance_app.infrastructure.persistence.entity.metadata.Curr
 import com.example.insurance_app.infrastructure.persistence.entity.policy.PolicyEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.policy.PolicyPricingSnapshotEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.policy.PolicyPricingSnapshotItemEntity;
-import com.example.insurance_app.infrastructure.persistence.mapper.BuildingEntityMapper;
-import com.example.insurance_app.infrastructure.persistence.mapper.ClientEntityMapper;
+import com.example.insurance_app.infrastructure.persistence.entity.policy.PolicyStatusEntity;
 import com.example.insurance_app.infrastructure.persistence.mapper.PolicyEntityMapper;
 import com.example.insurance_app.infrastructure.persistence.repository.policy.PolicyPricingSnapshotRepository;
 import com.example.insurance_app.infrastructure.persistence.repository.policy.PolicyRepository;
@@ -60,9 +59,7 @@ public class PolicyService {
     private final PremiumCalculator premiumCalculator;
     private final PolicyEntityMapper entityMapper;
     private final PolicyDtoMapper dtoMapper;
-    private final PolicyNumberGenerator numberGenerator;
-    private final ClientEntityMapper clientEntityMapper;
-    private final BuildingEntityMapper buildingEntityMapper;
+    private final PolicySupportDeps support;
 
     public PolicyService(PolicyRepository policyRepo,
                          PolicyPricingSnapshotRepository snapshotRepo,
@@ -70,18 +67,14 @@ public class PolicyService {
                          PremiumCalculator premiumCalculator,
                          PolicyEntityMapper entityMapper,
                          PolicyDtoMapper dtoMapper,
-                         PolicyNumberGenerator numberGenerator,
-                         ClientEntityMapper clientEntityMapper,
-                         BuildingEntityMapper buildingEntityMapper) {
+                         PolicySupportDeps support) {
         this.policyRepo = policyRepo;
         this.snapshotRepo = snapshotRepo;
         this.refRepos = refRepos;
         this.premiumCalculator = premiumCalculator;
         this.entityMapper = entityMapper;
         this.dtoMapper = dtoMapper;
-        this.numberGenerator = numberGenerator;
-        this.clientEntityMapper = clientEntityMapper;
-        this.buildingEntityMapper = buildingEntityMapper;
+        this.support = support;
     }
 
     @Transactional
@@ -98,7 +91,7 @@ public class PolicyService {
                 "Building does not belong to the specified client");
         DomainAssertions.check(currency.isActive(), "Currency is not active");
 
-        BuildingPricingContext ctx = buildPricingContext(building);
+        PricingContext ctx = buildPricingContext(building, broker);
         PremiumCalculationResult calc = premiumCalculator.calculate(
                 req.basePremium(), ctx, req.startDate());
 
@@ -113,7 +106,7 @@ public class PolicyService {
                 new PremiumAmount(calc.finalPremium()));
 
         Policy policy = Policy.createDraft(
-                new PolicyNumber(numberGenerator.generate()),
+                new PolicyNumber(support.numberGenerator().generate()),
                 refs,
                 new PolicyPeriod(req.startDate(), req.endDate()),
                 premium);
@@ -133,7 +126,7 @@ public class PolicyService {
         PolicyEntity entity = requirePolicy(policyId);
         Policy domain = entityMapper.toDomain(entity);
 
-        BuildingPricingContext ctx = buildPricingContext(entity.getBuilding());
+        PricingContext ctx = buildPricingContext(entity.getBuilding(), entity.getBroker());
         PremiumCalculationResult calc = premiumCalculator.calculate(
                 domain.getBasePremium().value(), ctx, domain.getPeriod().startDate());
 
@@ -165,6 +158,15 @@ public class PolicyService {
         return dtoMapper.toResponse(entityMapper.toDomain(entity), entity.getCurrency().getCode());
     }
 
+    @Transactional
+    public int expire() {
+        LocalDate today = LocalDate.now();
+        Instant now = Instant.now();
+
+        return policyRepo.markActiveOverdueAsExpired(
+                PolicyStatusEntity.ACTIVE, PolicyStatusEntity.EXPIRED, today, now);
+    }
+
     @Transactional(readOnly = true)
     public PageDto<PolicySummaryResponse> list(UUID clientId,
                                                 UUID brokerId,
@@ -178,7 +180,10 @@ public class PolicyService {
         var page = policyRepo.findAll(spec, pageable);
 
         List<PolicySummaryResponse> content = page.getContent().stream()
-                .map(dtoMapper::toSummaryResponse)
+                .map(entity -> {
+                    Policy domain = entityMapper.toDomain(entity);
+                    return dtoMapper.toSummaryResponse(domain, entity.getCurrency().getCode());
+                })
                 .toList();
 
         return new PageDto<>(
@@ -205,9 +210,8 @@ public class PolicyService {
         return dtoMapper.toDetailResponse(
                 domain,
                 entity.getCurrency(),
-                clientEntityMapper.toDomain(clientEntity),
-                clientEntity,
-                buildingEntityMapper.toDomain(buildingEntity),
+                support.clientEntityMapper().toDomain(clientEntity),
+                support.buildingEntityMapper().toDomain(buildingEntity),
                 city,
                 county,
                 country
@@ -238,7 +242,7 @@ public class PolicyService {
             item.setAppliedOrder(order++);
             snapshot.getItems().add(item);
 
-            if (adj.sourceType().startsWith("FEE")) {
+            if (adj.sourceType().startsWith("FEE") || "BROKER_COMMISSION".equals(adj.sourceType())) {
                 feePct = feePct.add(adj.percentage());
             } else {
                 riskPct = riskPct.add(adj.percentage());
@@ -250,20 +254,22 @@ public class PolicyService {
         snapshotRepo.save(snapshot);
     }
 
-    private BuildingPricingContext buildPricingContext(BuildingEntity building) {
+    private PricingContext buildPricingContext(BuildingEntity building, BrokerEntity broker) {
         CityEntity city = building.getCity();
         var county = city.getCounty();
         var country = county.getCountry();
         RiskIndicatorsEmbeddable risk = building.getRisk();
 
-        return new BuildingPricingContext(
+        return new PricingContext(
                 country.getId(),
                 county.getId(),
                 city.getId(),
                 building.getBuildingInfo().getBuildingType(),
                 risk != null
                         ? new RiskIndicators(risk.isFloodZone(), risk.isEarthquakeRiskZone())
-                        : null
+                        : null,
+                broker.getId(),
+                broker.getCommissionPercentage()
         );
     }
 

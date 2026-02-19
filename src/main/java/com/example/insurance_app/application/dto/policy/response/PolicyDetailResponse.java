@@ -1,8 +1,8 @@
 package com.example.insurance_app.application.dto.policy.response;
 
 import com.example.insurance_app.application.dto.building.response.BuildingDetailedResponse;
-import com.example.insurance_app.application.dto.client.response.ClientResponse;
-import com.example.insurance_app.application.dto.metadata.currency.response.CurrencyResponse;
+import com.example.insurance_app.application.dto.client.response.ClientRefResponse;
+import com.example.insurance_app.application.dto.metadata.currency.response.CurrencyRefResponse;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -13,10 +13,10 @@ public record PolicyDetailResponse(
         UUID id,
         String policyNumber,
         String status,
-        ClientResponse client,
+        ClientRefResponse client,
         BuildingDetailedResponse building,
         UUID brokerId,
-        CurrencyResponse currency,
+        CurrencyRefResponse currency,
         LocalDate startDate,
         LocalDate endDate,
         BigDecimal basePremium,

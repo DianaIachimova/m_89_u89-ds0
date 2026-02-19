@@ -4,6 +4,7 @@ import com.example.insurance_app.application.dto.metadata.feeconfig.request.Upda
 import com.example.insurance_app.application.dto.metadata.feeconfig.response.FeeConfigResponse;
 import com.example.insurance_app.application.exception.ResourceNotFoundException;
 import com.example.insurance_app.application.mapper.FeeConfigDtoMapper;
+import com.example.insurance_app.domain.exception.DomainValidationException;
 import com.example.insurance_app.application.service.metadata.FeeConfigurationUpdateService;
 import com.example.insurance_app.domain.model.metadata.feeconfig.FeeConfiguration;
 import com.example.insurance_app.domain.model.metadata.feeconfig.FeeConfigurationType;
@@ -12,6 +13,7 @@ import com.example.insurance_app.domain.model.metadata.feeconfig.vo.*;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.feeconfig.FeeConfigurationEntity;
 import com.example.insurance_app.infrastructure.persistence.mapper.FeeConfigEntityMapper;
 import com.example.insurance_app.infrastructure.persistence.repository.metadata.FeeConfigRepository;
+import com.example.insurance_app.infrastructure.persistence.entity.policy.PolicyStatusEntity;
 import com.example.insurance_app.infrastructure.persistence.repository.policy.PolicyPricingSnapshotItemRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -28,6 +30,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -71,7 +74,7 @@ class FeeConfigurationUpdateServiceTest {
 
             FeeConfiguration domain = createDomainConfig();
             when(feeEntityMapper.toDomain(entity)).thenReturn(domain);
-            when(snapshotItemRepo.existsBySourceTypeAndSourceId("FEE_CONFIGURATION", id)).thenReturn(false);
+            when(snapshotItemRepo.existsBySourceTypeAndSourceId(id)).thenReturn(false);
 
             FeeConfigurationEntity saved = mock(FeeConfigurationEntity.class);
             FeeConfiguration updatedDomain = mock(FeeConfiguration.class);
@@ -98,7 +101,7 @@ class FeeConfigurationUpdateServiceTest {
 
             FeeConfiguration domain = createDomainConfig();
             when(feeEntityMapper.toDomain(entity)).thenReturn(domain);
-            when(snapshotItemRepo.existsBySourceTypeAndSourceId("FEE_CONFIGURATION", id)).thenReturn(true);
+            when(snapshotItemRepo.existsBySourceTypeAndSourceId(id)).thenReturn(true);
 
             FeeConfigurationEntity newEntity = mock(FeeConfigurationEntity.class);
             FeeConfigurationEntity savedNew = mock(FeeConfigurationEntity.class);
@@ -147,12 +150,13 @@ class FeeConfigurationUpdateServiceTest {
     class DeactivateTests {
 
         @Test
-        @DisplayName("Should deactivate fee configuration")
+        @DisplayName("Should deactivate fee configuration when not referenced by active policy snapshots")
         void happyPath() {
             UUID id = UUID.randomUUID();
             FeeConfigurationEntity entity = mock(FeeConfigurationEntity.class);
             when(entity.getId()).thenReturn(id);
             when(feeRepository.findById(id)).thenReturn(Optional.of(entity));
+            when(snapshotItemRepo.existsFeeConfigReferencedInSnapshots(id, PolicyStatusEntity.ACTIVE)).thenReturn(false);
 
             FeeConfiguration domain = createDomainConfig();
             when(feeEntityMapper.toDomain(entity)).thenReturn(domain);
@@ -168,6 +172,21 @@ class FeeConfigurationUpdateServiceTest {
 
             FeeConfigResponse result = updateService.deactivate(id);
             assertNotNull(result);
+            verify(feeRepository).save(entity);
+        }
+
+        @Test
+        @DisplayName("Should throw DomainValidationException when fee is referenced by active policy snapshots")
+        void deactivateWhenInUse() {
+            UUID id = UUID.randomUUID();
+            FeeConfigurationEntity entity = mock(FeeConfigurationEntity.class);
+            when(feeRepository.findById(id)).thenReturn(Optional.of(entity));
+            when(snapshotItemRepo.existsFeeConfigReferencedInSnapshots(id, PolicyStatusEntity.ACTIVE)).thenReturn(true);
+
+            DomainValidationException ex = assertThrows(DomainValidationException.class, () -> updateService.deactivate(id));
+            assertNotNull(ex.getMessage());
+            assertTrue(ex.getMessage().contains("referenced by policy pricing snapshots"));
+            verify(feeRepository, never()).save(any());
         }
 
         @Test

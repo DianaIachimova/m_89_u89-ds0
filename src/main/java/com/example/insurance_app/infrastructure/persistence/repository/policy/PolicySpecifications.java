@@ -33,10 +33,10 @@ public final class PolicySpecifications {
                 predicates.add(cb.equal(root.get("status"), PolicyStatusEntity.valueOf(status)));
             }
             if (startFrom != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("startDate"), startFrom));
+                predicates.add(cb.greaterThanOrEqualTo(root.get("policyDetails").get("startDate"), startFrom));
             }
             if (startTo != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("endDate"), startTo));
+                predicates.add(cb.lessThanOrEqualTo(root.get("policyDetails").get("endDate"), startTo));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));
