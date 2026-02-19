@@ -1,4 +1,4 @@
-package com.example.insurance_app.application.dto.geogrophy;
+package com.example.insurance_app.application.dto.geography;
 
 import java.util.UUID;
 

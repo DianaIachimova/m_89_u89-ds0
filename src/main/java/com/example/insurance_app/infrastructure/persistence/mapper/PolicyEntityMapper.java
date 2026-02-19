@@ -12,6 +12,7 @@ import com.example.insurance_app.infrastructure.persistence.entity.broker.Broker
 import com.example.insurance_app.infrastructure.persistence.entity.building.BuildingEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.client.ClientEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.CurrencyEntity;
+import com.example.insurance_app.infrastructure.persistence.entity.policy.PolicyDetailsEmbeddable;
 import com.example.insurance_app.infrastructure.persistence.entity.policy.PolicyEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.policy.PolicyStatusEntity;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,7 @@ public class PolicyEntityMapper {
     public Policy toDomain(PolicyEntity entity) {
         if (entity == null) return null;
 
+        PolicyDetailsEmbeddable details = entity.getPolicyDetails();
         PolicyReferences refs = new PolicyReferences(
                 new ClientId(entity.getClient().getId()),
                 new BuildingId(entity.getBuilding().getId()),
@@ -29,8 +31,8 @@ public class PolicyEntityMapper {
                 new CurrencyId(entity.getCurrency().getId())
         );
 
-        CancellationInfo cancellation = entity.getCancelledAt() != null
-                ? new CancellationInfo(entity.getCancelledAt(), entity.getCancellationReason())
+        CancellationInfo cancellation = details.getCancelledAt() != null
+                ? new CancellationInfo(details.getCancelledAt(), details.getCancellationReason())
                 : null;
 
         PolicyIdentity identity = new PolicyIdentity(
@@ -38,14 +40,14 @@ public class PolicyEntityMapper {
                 new PolicyNumber(entity.getPolicyNumber()));
 
         PolicyPremium premium = new PolicyPremium(
-                new PremiumAmount(entity.getBasePremium()),
-                new PremiumAmount(entity.getFinalPremium()));
+                new PremiumAmount(details.getBasePremium()),
+                new PremiumAmount(details.getFinalPremium()));
 
         return Policy.rehydrate(
                 identity,
                 refs,
                 toDomainStatus(entity.getStatus()),
-                new PolicyPeriod(entity.getStartDate(), entity.getEndDate()),
+                new PolicyPeriod(details.getStartDate(), details.getEndDate()),
                 premium,
                 cancellation,
                 new AuditInfo(entity.getCreatedAt(), entity.getUpdatedAt())
@@ -59,15 +61,20 @@ public class PolicyEntityMapper {
                                  CurrencyEntity currency) {
         if (domain == null) return null;
 
-        PolicyEntity entity = new PolicyEntity(
+        PolicyDetailsEmbeddable details = new PolicyDetailsEmbeddable(
+                domain.getPeriod().startDate(),
+                domain.getPeriod().endDate(),
+                domain.getBasePremium().value(),
+                domain.getFinalPremium().value(),
+                null,
+                null
+        );
+
+        return new PolicyEntity(
                 domain.getPolicyNumber().value(),
                 client, building, broker, currency,
-                toEntityStatus(domain.getStatus()));
-        entity.setStartDate(domain.getPeriod().startDate());
-        entity.setEndDate(domain.getPeriod().endDate());
-        entity.setBasePremium(domain.getBasePremium().value());
-        entity.setFinalPremium(domain.getFinalPremium().value());
-        return entity;
+                toEntityStatus(domain.getStatus()),
+                details);
     }
 
 
@@ -75,11 +82,12 @@ public class PolicyEntityMapper {
         if (domain == null || entity == null) return;
 
         entity.setStatus(toEntityStatus(domain.getStatus()));
-        entity.setFinalPremium(domain.getFinalPremium().value());
+        PolicyDetailsEmbeddable details = entity.getPolicyDetails();
+        details.setFinalPremium(domain.getFinalPremium().value());
 
         if (domain.getCancellationInfo() != null) {
-            entity.setCancelledAt(domain.getCancellationInfo().cancelledAt());
-            entity.setCancellationReason(domain.getCancellationInfo().reason());
+            details.setCancelledAt(domain.getCancellationInfo().cancelledAt());
+            details.setCancellationReason(domain.getCancellationInfo().reason());
         }
     }
 

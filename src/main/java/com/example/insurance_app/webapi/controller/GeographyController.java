@@ -1,8 +1,8 @@
 package com.example.insurance_app.webapi.controller;
 
-import com.example.insurance_app.application.dto.geogrophy.CityResponse;
-import com.example.insurance_app.application.dto.geogrophy.CountryResponse;
-import com.example.insurance_app.application.dto.geogrophy.CountyResponse;
+import com.example.insurance_app.application.dto.geography.CityResponse;
+import com.example.insurance_app.application.dto.geography.CountryResponse;
+import com.example.insurance_app.application.dto.geography.CountyResponse;
 import com.example.insurance_app.application.service.GeographyService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

@@ -9,9 +9,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -60,23 +58,8 @@ public class PolicyEntity {
     @Column(name = "status", nullable = false, length = 15)
     private PolicyStatusEntity status;
 
-    @Column(name = "start_date", nullable = false)
-    private LocalDate startDate;
-
-    @Column(name = "end_date", nullable = false)
-    private LocalDate endDate;
-
-    @Column(name = "base_premium", nullable = false, precision = 15, scale = 2)
-    private BigDecimal basePremium;
-
-    @Column(name = "final_premium", nullable = false, precision = 15, scale = 2)
-    private BigDecimal finalPremium;
-
-    @Column(name = "cancelled_at")
-    private LocalDate cancelledAt;
-
-    @Column(name = "cancellation_reason", length = 500)
-    private String cancellationReason;
+    @Embedded
+    private PolicyDetailsEmbeddable policyDetails;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -94,13 +77,15 @@ public class PolicyEntity {
                         BuildingEntity building,
                         BrokerEntity broker,
                         CurrencyEntity currency,
-                        PolicyStatusEntity status) {
+                        PolicyStatusEntity status,
+                        PolicyDetailsEmbeddable policyDetails) {
         this.policyNumber = policyNumber;
         this.client = client;
         this.building = building;
         this.broker = broker;
         this.currency = currency;
         this.status = status;
+        this.policyDetails = policyDetails;
     }
 
 
@@ -110,10 +95,6 @@ public class PolicyEntity {
 
     public String getPolicyNumber() {
         return policyNumber;
-    }
-
-    public void setPolicyNumber(String policyNumber) {
-        this.policyNumber = policyNumber;
     }
 
     public ClientEntity getClient() {
@@ -156,52 +137,12 @@ public class PolicyEntity {
         this.status = status;
     }
 
-    public LocalDate getStartDate() {
-        return startDate;
+    public PolicyDetailsEmbeddable getPolicyDetails() {
+        return policyDetails;
     }
 
-    public void setStartDate(LocalDate startDate) {
-        this.startDate = startDate;
-    }
-
-    public LocalDate getEndDate() {
-        return endDate;
-    }
-
-    public void setEndDate(LocalDate endDate) {
-        this.endDate = endDate;
-    }
-
-    public BigDecimal getBasePremium() {
-        return basePremium;
-    }
-
-    public void setBasePremium(BigDecimal basePremium) {
-        this.basePremium = basePremium;
-    }
-
-    public BigDecimal getFinalPremium() {
-        return finalPremium;
-    }
-
-    public void setFinalPremium(BigDecimal finalPremium) {
-        this.finalPremium = finalPremium;
-    }
-
-    public LocalDate getCancelledAt() {
-        return cancelledAt;
-    }
-
-    public void setCancelledAt(LocalDate cancelledAt) {
-        this.cancelledAt = cancelledAt;
-    }
-
-    public String getCancellationReason() {
-        return cancellationReason;
-    }
-
-    public void setCancellationReason(String cancellationReason) {
-        this.cancellationReason = cancellationReason;
+    public void setPolicyDetails(PolicyDetailsEmbeddable policyDetails) {
+        this.policyDetails = policyDetails;
     }
 
     public Instant getCreatedAt() {

@@ -4,12 +4,14 @@ import com.example.insurance_app.application.dto.metadata.feeconfig.request.Upda
 import com.example.insurance_app.application.dto.metadata.feeconfig.response.FeeConfigResponse;
 import com.example.insurance_app.application.exception.ResourceNotFoundException;
 import com.example.insurance_app.application.mapper.FeeConfigDtoMapper;
+import com.example.insurance_app.domain.exception.DomainValidationException;
 import com.example.insurance_app.domain.model.metadata.feeconfig.FeeConfiguration;
 import com.example.insurance_app.domain.model.metadata.feeconfig.FeeDetails;
 import com.example.insurance_app.domain.model.metadata.feeconfig.vo.EffectivePeriod;
 import com.example.insurance_app.domain.model.metadata.feeconfig.vo.FeeName;
 import com.example.insurance_app.domain.model.metadata.feeconfig.vo.FeePercentage;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.feeconfig.FeeConfigurationEntity;
+import com.example.insurance_app.infrastructure.persistence.entity.policy.PolicyStatusEntity;
 import com.example.insurance_app.infrastructure.persistence.mapper.FeeConfigEntityMapper;
 import com.example.insurance_app.infrastructure.persistence.repository.metadata.FeeConfigRepository;
 import com.example.insurance_app.infrastructure.persistence.repository.policy.PolicyPricingSnapshotItemRepository;
@@ -55,8 +57,7 @@ public class FeeConfigurationUpdateService {
         BigDecimal newPercentage = req.percentage() != null ? req.percentage() : current.getDetails().percentage().value();
         LocalDate newTo = req.effectiveTo() != null ? req.effectiveTo() : current.getDetails().period().to();
 
-        boolean usedBySnapshot = snapshotItemRepo.existsBySourceTypeAndSourceId(
-                "FEE_CONFIGURATION", entity.getId());
+        boolean usedBySnapshot = snapshotItemRepo.existsBySourceTypeAndSourceId(entity.getId());
         if (usedBySnapshot) {
             return updateByCreatingNewVersion(entity, current, newName, newPercentage, newTo);
         }
@@ -66,6 +67,8 @@ public class FeeConfigurationUpdateService {
     @Transactional
     public FeeConfigResponse deactivate(UUID id) {
         FeeConfigurationEntity entity = requireFeeConfig(id);
+        checkIfFeeConfigIsUsed(id);
+
         logger.info("Deactivating fee configuration with id: {}", entity.getId());
 
         FeeConfiguration domain = feeEntityMapper.toDomain(entity);
@@ -126,6 +129,13 @@ public class FeeConfigurationUpdateService {
     private void validateRequiredUpdateFields(UpdateFeeConfigRequest request) {
         if (request.name() == null && request.effectiveTo() == null && request.percentage() == null) {
             throw new IllegalArgumentException("At least one of name, percentage, or effectiveTo is required");
+        }
+    }
+
+    private void checkIfFeeConfigIsUsed(UUID id){
+        if (snapshotItemRepo.existsFeeConfigReferencedInSnapshots(id, PolicyStatusEntity.ACTIVE)) {
+            throw new DomainValidationException(
+                    "Cannot deactivate fee configuration still referenced by policy pricing snapshots");
         }
     }
 }

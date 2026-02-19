@@ -1,6 +1,8 @@
 package com.example.insurance_app.controller;
 
 import com.example.insurance_app.application.dto.building.BuildingTypeDto;
+import com.example.insurance_app.application.dto.building.RiskIndicatorsDto;
+import com.example.insurance_app.application.dto.client.ClientTypeDto;
 import com.example.insurance_app.application.dto.metadata.currency.CurrencyAction;
 import com.example.insurance_app.application.dto.metadata.currency.request.CreateCurrencyRequest;
 import com.example.insurance_app.application.dto.metadata.currency.request.CurrencyActionRequest;
@@ -17,10 +19,23 @@ import com.example.insurance_app.application.dto.metadata.riskfactors.request.Up
 import com.example.insurance_app.application.dto.metadata.riskfactors.response.RiskFactorResponse;
 import com.example.insurance_app.application.exception.DuplicateResourceException;
 import com.example.insurance_app.application.exception.ResourceNotFoundException;
+import com.example.insurance_app.application.dto.building.request.AddressRequest;
+import com.example.insurance_app.application.dto.building.request.BuildingInfoRequest;
+import com.example.insurance_app.application.dto.building.request.CreateBuildingRequest;
+import com.example.insurance_app.application.dto.building.response.BuildingSummaryResponse;
+import com.example.insurance_app.application.dto.client.request.ContactInfoRequest;
+import com.example.insurance_app.application.dto.client.request.CreateClientRequest;
+import com.example.insurance_app.application.dto.client.response.ClientResponse;
+import com.example.insurance_app.application.dto.policy.request.CreatePolicyRequest;
+import com.example.insurance_app.application.dto.policy.response.PolicyResponse;
+import com.example.insurance_app.application.service.BuildingService;
+import com.example.insurance_app.application.service.ClientService;
 import com.example.insurance_app.application.service.metadata.CurrencyService;
 import com.example.insurance_app.application.service.metadata.FeeConfigurationService;
 import com.example.insurance_app.application.service.metadata.FeeConfigurationUpdateService;
 import com.example.insurance_app.application.service.metadata.RiskFactorService;
+import com.example.insurance_app.application.service.policy.PolicyService;
+import com.example.insurance_app.domain.exception.DomainValidationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -52,6 +67,12 @@ class MetadataIntegrationTest {
     private FeeConfigurationUpdateService feeUpdateService;
     @Autowired
     private RiskFactorService riskFactorService;
+    @Autowired
+    private PolicyService policyService;
+    @Autowired
+    private ClientService clientService;
+    @Autowired
+    private BuildingService buildingService;
 
     private static final UUID COUNTRY_ID = UUID.fromString("3f9f3a1b-6c2c-4f1e-9c7c-7e5b6a9c2a11");
     private static final UUID COUNTY_ID = UUID.fromString("a14a2bd0-6b6d-4b83-8ef4-2bb7d4b1d2a9");
@@ -154,13 +175,44 @@ class MetadataIntegrationTest {
         }
 
         @Test
-        @DisplayName("Should deactivate fee configuration")
+        @DisplayName("Should deactivate fee configuration when not in use")
         void shouldDeactivate() {
-            UUID feeId = UUID.fromString("f0f0f0f0-0000-4000-a000-000000000001");
+            UUID feeId = UUID.fromString("f0f0f0f0-0000-4000-a000-000000000003");
 
             FeeConfigResponse response = feeUpdateService.deactivate(feeId);
 
             assertFalse(response.isActive());
+        }
+
+        @Test
+        @DisplayName("Should reject deactivate when fee is referenced by active policy snapshot")
+        void shouldNotDeactivateWhenInUse() {
+            ClientResponse client = clientService.createClient(new CreateClientRequest(
+                    ClientTypeDto.INDIVIDUAL, "Fee Guard Client", "1234567890123",
+                    new ContactInfoRequest("feeguard@example.com", "+40712345671"), null
+            ));
+            BuildingSummaryResponse building = buildingService.createBuilding(client.id(), new CreateBuildingRequest(
+                    new AddressRequest("Guard St", "1", CITY_ID),
+                    new BuildingInfoRequest(2020, BuildingTypeDto.RESIDENTIAL, 5,
+                            new BigDecimal("200.00"), new BigDecimal("300000.00")),
+                    new RiskIndicatorsDto(true, false)
+            ));
+            CreatePolicyRequest policyReq = new CreatePolicyRequest(
+                    client.id(), building.id(), UUID.fromString("b0b0b0b0-0000-4000-a000-000000000001"),
+                    UUID.fromString("c0c0c0c0-0000-4000-a000-000000000001"),
+                    new BigDecimal("1000.00"), LocalDate.now().plusDays(1), LocalDate.now().plusYears(1)
+            );
+            PolicyResponse draft = policyService.createDraft(policyReq);
+            policyService.activate(draft.id());
+
+            UUID feeId = UUID.fromString("f0f0f0f0-0000-4000-a000-000000000001");
+            DomainValidationException ex = assertThrows(DomainValidationException.class,
+                    () -> feeUpdateService.deactivate(feeId));
+            assertTrue(ex.getMessage().contains("referenced by policy pricing snapshots"));
+
+            var page = feeConfigService.listFeeConfigurations(PageRequest.of(0, 100));
+            FeeConfigResponse fee = page.content().stream().filter(f -> feeId.equals(f.id())).findFirst().orElseThrow();
+            assertTrue(fee.isActive());
         }
 
         @Test
