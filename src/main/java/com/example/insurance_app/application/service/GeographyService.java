@@ -4,10 +4,12 @@ import com.example.insurance_app.application.dto.geography.CityResponse;
 import com.example.insurance_app.application.dto.geography.CountryResponse;
 import com.example.insurance_app.application.dto.geography.CountyResponse;
 import com.example.insurance_app.application.exception.ResourceNotFoundException;
+import com.example.insurance_app.infrastructure.config.cache.CacheNames;
 import com.example.insurance_app.infrastructure.persistence.repository.geography.CityRepository;
 import com.example.insurance_app.infrastructure.persistence.repository.geography.CountryRepository;
 import com.example.insurance_app.infrastructure.persistence.repository.geography.CountyRepository;
 import com.example.insurance_app.application.mapper.GeographyMapper;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -34,6 +36,7 @@ public class GeographyService {
         this.geographyMapper = geographyMapper;
     }
 
+    @Cacheable(CacheNames.COUNTRIES)
     public List<CountryResponse> getCountries() {
         logger.info("Fetching all countries");
         var views = countryRepository.findAllByOrderByNameAsc();
@@ -41,6 +44,7 @@ public class GeographyService {
         return views.stream().map(geographyMapper::toDto).toList();
     }
 
+    @Cacheable(value = CacheNames.COUNTIES, key = "#countryId")
     public List<CountyResponse> getCountiesByCountryId(UUID countryId) {
         logger.info("Fetching all counties for country {}", countryId);
 
@@ -55,6 +59,7 @@ public class GeographyService {
 
     }
 
+    @Cacheable(value = CacheNames.CITIES, key = "#countyId")
     public List<CityResponse> getCitiesByCountyId(UUID countyId) {
         logger.info("Fetching all cities for county {}", countyId);
 

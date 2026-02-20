@@ -10,4 +10,6 @@ spring:
           time_zone: UTC
   flyway:
     enabled: false
+  cache:
+    type: none
 

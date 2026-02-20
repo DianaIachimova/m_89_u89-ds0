@@ -1,7 +1,6 @@
 package com.example.insurance_app.application.service.metadata;
 
 import com.example.insurance_app.application.dto.PageDto;
-import com.example.insurance_app.application.dto.metadata.currency.CurrencyAction;
 import com.example.insurance_app.application.dto.metadata.currency.request.CreateCurrencyRequest;
 import com.example.insurance_app.application.dto.metadata.currency.request.CurrencyActionRequest;
 import com.example.insurance_app.application.dto.metadata.currency.response.CurrencyResponse;
@@ -14,10 +13,13 @@ import com.example.insurance_app.domain.model.metadata.currency.vo.CurrencyCode;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.CurrencyEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.policy.PolicyStatusEntity;
 import com.example.insurance_app.infrastructure.persistence.mapper.CurrencyEntityMapper;
+import com.example.insurance_app.infrastructure.config.cache.CacheNames;
 import com.example.insurance_app.infrastructure.persistence.repository.metadata.CurrencyRepository;
 import com.example.insurance_app.infrastructure.persistence.repository.policy.PolicyRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +47,7 @@ public class CurrencyService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = CacheNames.CURRENCIES, key = "#pageable.pageNumber + '-' + #pageable.pageSize")
     public PageDto<CurrencyResponse> getAllCurrencies(Pageable pageable) {
         logger.info("Fetching all currencies");
         var page= currencyRepository.findAllByOrderByCodeAsc(pageable);
@@ -65,6 +68,7 @@ public class CurrencyService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheNames.CURRENCIES, allEntries = true)
     public CurrencyResponse createCurrency(CreateCurrencyRequest request) {
         logger.info("Creating currency with code: {}", request.code());
         var normalizedCode = new CurrencyCode(request.code()).code();
@@ -83,6 +87,7 @@ public class CurrencyService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheNames.CURRENCIES, allEntries = true)
     public CurrencyResponse executeAction(UUID currencyId, CurrencyActionRequest request) {
         logger.info("Executing action={} on currency id={}", request.action(), currencyId);
 
@@ -111,6 +116,4 @@ public class CurrencyService {
         logger.info("Currency action={} completed for id={}", request.action(), currencyId);
         return currencyDtoMapper.toResponse(updated);
     }
-
-
 }

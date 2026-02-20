@@ -10,6 +10,7 @@ import com.example.insurance_app.domain.model.metadata.feeconfig.FeeDetails;
 import com.example.insurance_app.domain.model.metadata.feeconfig.vo.EffectivePeriod;
 import com.example.insurance_app.domain.model.metadata.feeconfig.vo.FeeName;
 import com.example.insurance_app.domain.model.metadata.feeconfig.vo.FeePercentage;
+import com.example.insurance_app.infrastructure.config.cache.CacheNames;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.feeconfig.FeeConfigurationEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.policy.PolicyStatusEntity;
 import com.example.insurance_app.infrastructure.persistence.mapper.FeeConfigEntityMapper;
@@ -17,6 +18,7 @@ import com.example.insurance_app.infrastructure.persistence.repository.metadata.
 import com.example.insurance_app.infrastructure.persistence.repository.policy.PolicyPricingSnapshotItemRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +46,7 @@ public class FeeConfigurationUpdateService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheNames.FEES_CONFIGS, allEntries = true)
     public FeeConfigResponse update(UUID id, UpdateFeeConfigRequest req) {
         FeeConfigurationEntity entity = requireFeeConfig(id);
         validateRequiredUpdateFields(req);
@@ -65,6 +68,7 @@ public class FeeConfigurationUpdateService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheNames.FEES_CONFIGS, allEntries = true)
     public FeeConfigResponse deactivate(UUID id) {
         FeeConfigurationEntity entity = requireFeeConfig(id);
         checkIfFeeConfigIsUsed(id);

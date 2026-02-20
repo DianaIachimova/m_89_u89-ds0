@@ -6,12 +6,15 @@ import com.example.insurance_app.application.dto.metadata.feeconfig.response.Fee
 import com.example.insurance_app.application.exception.DuplicateResourceException;
 import com.example.insurance_app.application.mapper.FeeConfigDtoMapper;
 import com.example.insurance_app.domain.model.metadata.feeconfig.FeeConfiguration;
+import com.example.insurance_app.infrastructure.config.cache.CacheNames;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.feeconfig.FeeConfigTypeEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.feeconfig.FeeConfigurationEntity;
 import com.example.insurance_app.infrastructure.persistence.mapper.FeeConfigEntityMapper;
 import com.example.insurance_app.infrastructure.persistence.repository.metadata.FeeConfigRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +38,7 @@ public class FeeConfigurationService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = CacheNames.FEES_CONFIGS, key = "#pageable.pageNumber + '-' + #pageable.pageSize")
     public PageDto<FeeConfigResponse> listFeeConfigurations(Pageable pageable) {
         logger.info("Listing all fee configurations");
 
@@ -57,6 +61,7 @@ public class FeeConfigurationService {
     }
 
     @Transactional
+    @CacheEvict(value = {CacheNames.FEES_CONFIGS}, allEntries = true)
     public FeeConfigResponse create(CreateFeeConfigRequest req){
         logger.info("Creating a new fee configuration");
         var feeConfiguration  = feeDtoMapper.toDomain(req);
