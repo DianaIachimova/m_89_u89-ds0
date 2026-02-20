@@ -4,10 +4,12 @@ import com.example.insurance_app.domain.model.building.BuildingType;
 import com.example.insurance_app.domain.model.client.ClientType;
 import com.example.insurance_app.domain.model.metadata.feeconfig.FeeConfigurationType;
 import com.example.insurance_app.domain.model.metadata.riskfactors.RiskLevel;
+import com.example.insurance_app.domain.model.policy.PolicyStatus;
 import com.example.insurance_app.infrastructure.persistence.entity.building.BuildingTypeEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.client.ClientTypeEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.feeconfig.FeeConfigTypeEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.riskfactors.RiskLevelEntity;
+import com.example.insurance_app.infrastructure.persistence.entity.policy.PolicyStatusEntity;
 
 public final class EnumEntityMapper {
 
@@ -82,6 +84,16 @@ public final class EnumEntityMapper {
             case BROKER_COMMISSION -> FeeConfigurationType.BROKER_COMMISSION;
             case RISK_ADJUSTMENT -> FeeConfigurationType.RISK_ADJUSTMENT;
             case ADMIN_FEE -> FeeConfigurationType.ADMIN_FEE;
+        };
+    }
+
+    public static PolicyStatusEntity toPolicyStatusEntity(PolicyStatus domain) {
+        if (domain == null) return null;
+        return switch (domain) {
+            case DRAFT -> PolicyStatusEntity.DRAFT;
+            case ACTIVE -> PolicyStatusEntity.ACTIVE;
+            case EXPIRED -> PolicyStatusEntity.EXPIRED;
+            case CANCELLED -> PolicyStatusEntity.CANCELLED;
         };
     }
 }
