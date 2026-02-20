@@ -4,11 +4,9 @@ info:
   description: |
     Backend API for Romanian insurance company managing building insurance policies.
     
-    **Current Sprint:** Client and Building Management
-    
     **User Roles:**
-    - Brokers: Manage clients and buildings
-    - Administrators: (Future sprint)
+    - Brokers: Manage clients, buildings, and policies
+    - Administrators: Manage brokers, metadata (currencies, fees, risk factors), and view reports
   version: 0.0.1-SNAPSHOT
   contact:
     name: Endava Training
@@ -27,6 +25,18 @@ tags:
     description: Building (insurance object) management operations
   - name: Geography
     description: Geographic data (countries, counties, cities)
+  - name: Policies
+    description: Insurance policy management operations for brokers
+  - name: Brokers (Admin)
+    description: Broker management operations for administrators
+  - name: Currencies (Admin)
+    description: Currency management operations for administrators
+  - name: Fees (Admin)
+    description: Fee configuration management operations for administrators
+  - name: Risk Factors (Admin)
+    description: Risk factor management operations for administrators
+  - name: Reports (Admin)
+    description: Policy reporting operations for administrators
 
 paths:
   /api/brokers/clients:
@@ -83,7 +93,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PageDtoClientResponse'
-    
+
     post:
       tags:
         - Clients
@@ -144,7 +154,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
-    
+
     put:
       tags:
         - Clients
@@ -221,7 +231,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
-    
+
     post:
       tags:
         - Buildings
@@ -290,7 +300,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
-    
+
     put:
       tags:
         - Buildings
@@ -405,6 +415,1020 @@ paths:
                   $ref: '#/components/schemas/CityResponse'
         '404':
           description: County not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/brokers/policies:
+    get:
+      tags:
+        - Policies
+      summary: List policies
+      description: List policies with optional filters and pagination
+      operationId: listPolicies
+      parameters:
+        - name: clientId
+          in: query
+          description: Filter by client ID
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: brokerId
+          in: query
+          description: Filter by broker ID
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          description: Filter by policy status
+          required: false
+          schema:
+            type: string
+            enum: [DRAFT, ACTIVE, CANCELLED]
+        - name: startDate
+          in: query
+          description: Filter by start date (from)
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          description: Filter by end date (to)
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          description: Page number (0-indexed)
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: sort
+          in: query
+          description: Sort field and direction
+          required: false
+          schema:
+            type: string
+            default: "createdAt,desc"
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageDtoPolicySummaryResponse'
+
+    post:
+      tags:
+        - Policies
+      summary: Create policy draft
+      description: Create a new policy in DRAFT status
+      operationId: createPolicyDraft
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePolicyRequest'
+      responses:
+        '201':
+          description: Policy draft created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/brokers/policies/{id}:
+    get:
+      tags:
+        - Policies
+      summary: Get policy by ID
+      description: Retrieve detailed policy information
+      operationId: getPolicyById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Policy UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyDetailResponse'
+        '404':
+          description: Policy not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/brokers/policies/{id}/activate:
+    post:
+      tags:
+        - Policies
+      summary: Activate policy
+      description: Activate a policy from DRAFT status to ACTIVE
+      operationId: activatePolicy
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Policy UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Policy activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyResponse'
+        '400':
+          description: Invalid state transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Policy not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/brokers/policies/{id}/cancel:
+    post:
+      tags:
+        - Policies
+      summary: Cancel policy
+      description: Cancel an active policy
+      operationId: cancelPolicy
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Policy UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelPolicyRequest'
+      responses:
+        '200':
+          description: Policy cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyResponse'
+        '400':
+          description: Invalid state transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Policy not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/admin/brokers:
+    get:
+      tags:
+        - Brokers (Admin)
+      summary: List brokers
+      description: List all brokers with pagination
+      operationId: listBrokers
+      parameters:
+        - name: page
+          in: query
+          description: Page number (0-indexed)
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: sort
+          in: query
+          description: Sort field and direction
+          required: false
+          schema:
+            type: string
+            default: "name,asc"
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageDtoBrokerResponse'
+
+    post:
+      tags:
+        - Brokers (Admin)
+      summary: Create broker
+      description: Create a new broker
+      operationId: createBroker
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBrokerRequest'
+      responses:
+        '201':
+          description: Broker created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrokerResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/admin/brokers/{id}:
+    get:
+      tags:
+        - Brokers (Admin)
+      summary: Get broker by ID
+      description: Retrieve broker details
+      operationId: getBrokerById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Broker UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrokerResponse'
+        '404':
+          description: Broker not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+    put:
+      tags:
+        - Brokers (Admin)
+      summary: Update broker
+      description: Update broker information
+      operationId: updateBroker
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Broker UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBrokerRequest'
+      responses:
+        '200':
+          description: Broker updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrokerResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Broker not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/admin/brokers/{id}/activate:
+    post:
+      tags:
+        - Brokers (Admin)
+      summary: Activate broker
+      description: Activate a broker
+      operationId: activateBroker
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Broker UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Broker activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrokerResponse'
+        '404':
+          description: Broker not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/admin/brokers/{id}/deactivate:
+    post:
+      tags:
+        - Brokers (Admin)
+      summary: Deactivate broker
+      description: Deactivate a broker
+      operationId: deactivateBroker
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Broker UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Broker deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrokerResponse'
+        '404':
+          description: Broker not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/admin/currencies:
+    get:
+      tags:
+        - Currencies (Admin)
+      summary: List currencies
+      description: List all currencies with pagination
+      operationId: listCurrencies
+      parameters:
+        - name: page
+          in: query
+          description: Page number (0-indexed)
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: sort
+          in: query
+          description: Sort field and direction
+          required: false
+          schema:
+            type: string
+            default: "code,asc"
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageDtoCurrencyResponse'
+
+    post:
+      tags:
+        - Currencies (Admin)
+      summary: Create currency
+      description: Create a new currency
+      operationId: createCurrency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCurrencyRequest'
+      responses:
+        '201':
+          description: Currency created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrencyResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/admin/currencies/{currencyId}/actions:
+    post:
+      tags:
+        - Currencies (Admin)
+      summary: Execute currency action
+      description: Execute an action on a currency (ACTIVATE or DEACTIVATE)
+      operationId: executeCurrencyAction
+      parameters:
+        - name: currencyId
+          in: path
+          required: true
+          description: Currency UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurrencyActionRequest'
+      responses:
+        '200':
+          description: Action executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrencyResponse'
+        '400':
+          description: Invalid action
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Currency not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/admin/fees:
+    get:
+      tags:
+        - Fees (Admin)
+      summary: List fee configurations
+      description: List all fee configurations with pagination
+      operationId: listFeeConfigurations
+      parameters:
+        - name: page
+          in: query
+          description: Page number (0-indexed)
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: sort
+          in: query
+          description: Sort field and direction
+          required: false
+          schema:
+            type: string
+            default: "code,asc"
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageDtoFeeConfigResponse'
+
+    post:
+      tags:
+        - Fees (Admin)
+      summary: Create fee configuration
+      description: Create a new fee configuration
+      operationId: createFeeConfiguration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFeeConfigRequest'
+      responses:
+        '201':
+          description: Fee configuration created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeeConfigResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/admin/fees/{id}:
+    put:
+      tags:
+        - Fees (Admin)
+      summary: Update fee configuration
+      description: Update fee configuration details
+      operationId: updateFeeConfiguration
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Fee configuration UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFeeConfigRequest'
+      responses:
+        '200':
+          description: Fee configuration updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeeConfigResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Fee configuration not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/admin/fees/{id}/deactivate:
+    post:
+      tags:
+        - Fees (Admin)
+      summary: Deactivate fee configuration
+      description: Deactivate a fee configuration
+      operationId: deactivateFeeConfiguration
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Fee configuration UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Fee configuration deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeeConfigResponse'
+        '404':
+          description: Fee configuration not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/admin/risk-factors:
+    get:
+      tags:
+        - Risk Factors (Admin)
+      summary: List risk factors
+      description: List all risk factors with pagination
+      operationId: listRiskFactors
+      parameters:
+        - name: page
+          in: query
+          description: Page number (0-indexed)
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: sort
+          in: query
+          description: Sort field and direction
+          required: false
+          schema:
+            type: string
+            default: "createdAt,desc"
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageDtoRiskFactorResponse'
+
+    post:
+      tags:
+        - Risk Factors (Admin)
+      summary: Create risk factor
+      description: Create a new risk factor
+      operationId: createRiskFactor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRiskFactorRequest'
+      responses:
+        '201':
+          description: Risk factor created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskFactorResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/admin/risk-factors/{id}:
+    put:
+      tags:
+        - Risk Factors (Admin)
+      summary: Update risk factor percentage
+      description: Update risk factor adjustment percentage
+      operationId: updateRiskFactorPercentage
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Risk factor UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRiskFactorPercentageRequest'
+      responses:
+        '200':
+          description: Risk factor updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskFactorResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Risk factor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/admin/risk-factors/{id}/actions:
+    post:
+      tags:
+        - Risk Factors (Admin)
+      summary: Execute risk factor action
+      description: Execute an action on a risk factor (ACTIVATE or DEACTIVATE)
+      operationId: executeRiskFactorAction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Risk factor UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RiskFactorActionRequest'
+      responses:
+        '200':
+          description: Action executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskFactorResponse'
+        '400':
+          description: Invalid action
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Risk factor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/admin/reports/policies-by-country:
+    get:
+      tags:
+        - Reports (Admin)
+      summary: Policy report by country
+      description: Generate policy report grouped by country
+      operationId: reportPoliciesByCountry
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: Start date for report
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          description: End date for report
+          schema:
+            type: string
+            format: date
+        - name: status
+          in: query
+          required: false
+          description: Filter by policy status
+          schema:
+            type: string
+        - name: currency
+          in: query
+          required: false
+          description: Filter by currency code
+          schema:
+            type: string
+        - name: buildingType
+          in: query
+          required: false
+          description: Filter by building type
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PolicyReportResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/admin/reports/policies-by-county:
+    get:
+      tags:
+        - Reports (Admin)
+      summary: Policy report by county
+      description: Generate policy report grouped by county
+      operationId: reportPoliciesByCounty
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: Start date for report
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          description: End date for report
+          schema:
+            type: string
+            format: date
+        - name: status
+          in: query
+          required: false
+          description: Filter by policy status
+          schema:
+            type: string
+        - name: currency
+          in: query
+          required: false
+          description: Filter by currency code
+          schema:
+            type: string
+        - name: buildingType
+          in: query
+          required: false
+          description: Filter by building type
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PolicyReportResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/admin/reports/policies-by-city:
+    get:
+      tags:
+        - Reports (Admin)
+      summary: Policy report by city
+      description: Generate policy report grouped by city
+      operationId: reportPoliciesByCity
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: Start date for report
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          description: End date for report
+          schema:
+            type: string
+            format: date
+        - name: status
+          in: query
+          required: false
+          description: Filter by policy status
+          schema:
+            type: string
+        - name: currency
+          in: query
+          required: false
+          description: Filter by currency code
+          schema:
+            type: string
+        - name: buildingType
+          in: query
+          required: false
+          description: Filter by building type
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PolicyReportResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/admin/reports/policies-by-broker:
+    get:
+      tags:
+        - Reports (Admin)
+      summary: Policy report by broker
+      description: Generate policy report grouped by broker
+      operationId: reportPoliciesByBroker
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: Start date for report
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          description: End date for report
+          schema:
+            type: string
+            format: date
+        - name: status
+          in: query
+          required: false
+          description: Filter by policy status
+          schema:
+            type: string
+        - name: currency
+          in: query
+          required: false
+          description: Filter by currency code
+          schema:
+            type: string
+        - name: buildingType
+          in: query
+          required: false
+          description: Filter by building type
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PolicyReportResponse'
+        '400':
+          description: Validation error
           content:
             application/json:
               schema:
@@ -836,6 +1860,658 @@ components:
           type: string
           description: City name
           example: "Sector 1"
+
+    # Policy Schemas
+    CreatePolicyRequest:
+      type: object
+      required:
+        - clientId
+        - buildingId
+        - brokerId
+        - currencyId
+        - basePremium
+        - startDate
+        - endDate
+      properties:
+        clientId:
+          type: string
+          format: uuid
+          description: Client UUID
+        buildingId:
+          type: string
+          format: uuid
+          description: Building UUID
+        brokerId:
+          type: string
+          format: uuid
+          description: Broker UUID
+        currencyId:
+          type: string
+          format: uuid
+          description: Currency UUID
+        basePremium:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Base premium amount
+          example: 1000.00
+        startDate:
+          type: string
+          format: date
+          description: Policy start date (must not be in the past)
+          example: "2026-03-01"
+        endDate:
+          type: string
+          format: date
+          description: Policy end date
+          example: "2027-03-01"
+
+    CancelPolicyRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+          description: Cancellation reason
+          example: "Client requested cancellation"
+
+    PolicyResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        policyNumber:
+          type: string
+          description: Auto-generated policy number
+        status:
+          type: string
+          enum: [DRAFT, ACTIVE, CANCELLED]
+        clientId:
+          type: string
+          format: uuid
+        buildingId:
+          type: string
+          format: uuid
+        brokerId:
+          type: string
+          format: uuid
+        currencyCode:
+          type: string
+          description: Currency code (e.g., RON, EUR)
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        basePremium:
+          type: number
+          format: double
+        finalPremium:
+          type: number
+          format: double
+          description: Calculated premium with fees and risk factors
+        cancelledAt:
+          type: string
+          format: date
+          nullable: true
+        cancellationReason:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PolicySummaryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        policyNumber:
+          type: string
+        status:
+          type: string
+          enum: [DRAFT, ACTIVE, CANCELLED]
+        clientId:
+          type: string
+          format: uuid
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        finalPremium:
+          type: number
+          format: double
+        currencyCode:
+          type: string
+
+    PolicyDetailResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        policyNumber:
+          type: string
+        status:
+          type: string
+          enum: [DRAFT, ACTIVE, CANCELLED]
+        client:
+          type: object
+          description: Client reference information
+        building:
+          type: object
+          description: Building detailed information
+        brokerId:
+          type: string
+          format: uuid
+        currency:
+          type: object
+          description: Currency reference information
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        basePremium:
+          type: number
+          format: double
+        finalPremium:
+          type: number
+          format: double
+        cancelledAt:
+          type: string
+          format: date
+          nullable: true
+        cancellationReason:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PageDtoPolicySummaryResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicySummaryResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+
+    # Broker Schemas
+    CreateBrokerRequest:
+      type: object
+      required:
+        - brokerCode
+        - name
+        - email
+        - active
+      properties:
+        brokerCode:
+          type: string
+          minLength: 3
+          maxLength: 30
+          description: Unique broker code
+          example: "BRK001"
+        name:
+          type: string
+          minLength: 2
+          maxLength: 120
+          description: Broker name
+          example: "ABC Insurance Brokers"
+        email:
+          type: string
+          format: email
+          maxLength: 100
+          example: "contact@abcbrokers.com"
+        phone:
+          type: string
+          pattern: '^\+?\d{10,15}$'
+          example: "+40712345678"
+        commissionPercentage:
+          type: number
+          format: double
+          minimum: 0.0
+          maximum: 1.0
+          exclusiveMinimum: true
+          description: Commission percentage (0.0 to 1.0)
+          example: 0.15
+        active:
+          type: boolean
+          description: Active status
+          example: true
+
+    UpdateBrokerRequest:
+      type: object
+      required:
+        - name
+        - email
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 120
+          example: "ABC Insurance Brokers Ltd"
+        email:
+          type: string
+          format: email
+          maxLength: 100
+          example: "info@abcbrokers.com"
+        phone:
+          type: string
+          pattern: '^\+?\d{10,15}$'
+          example: "+40712345679"
+        commissionPercentage:
+          type: number
+          format: double
+          minimum: 0.0
+          maximum: 1.0
+          exclusiveMinimum: true
+          example: 0.18
+
+    BrokerResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        brokerCode:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        status:
+          type: string
+          description: Broker status (ACTIVE/INACTIVE)
+        commissionPercentage:
+          type: number
+          format: double
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PageDtoBrokerResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/BrokerResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+
+    # Currency Schemas
+    CreateCurrencyRequest:
+      type: object
+      required:
+        - code
+        - name
+        - exchangeRateToBase
+        - isActive
+      properties:
+        code:
+          type: string
+          minLength: 3
+          maxLength: 3
+          pattern: '^[A-Z]{3}$'
+          description: ISO 4217 currency code
+          example: "EUR"
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+          description: Currency name
+          example: "Euro"
+        exchangeRateToBase:
+          type: number
+          format: double
+          minimum: 0.000001
+          description: Exchange rate to base currency
+          example: 0.2
+        isActive:
+          type: boolean
+          description: Active status
+          example: true
+
+    CurrencyActionRequest:
+      type: object
+      required:
+        - action
+      properties:
+        action:
+          type: string
+          enum: [ACTIVATE, DEACTIVATE]
+          description: Action to execute
+          example: "ACTIVATE"
+
+    CurrencyResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          description: ISO 4217 currency code
+        name:
+          type: string
+        exchangeRateToBase:
+          type: number
+          format: double
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PageDtoCurrencyResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/CurrencyResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+
+    # Fee Configuration Schemas
+    CreateFeeConfigRequest:
+      type: object
+      required:
+        - code
+        - name
+        - type
+        - percentage
+        - effectiveFrom
+        - isActive
+      properties:
+        code:
+          type: string
+          minLength: 3
+          maxLength: 50
+          pattern: '^[A-Z][A-Z0-9_]*$'
+          description: Unique fee code (uppercase with underscores)
+          example: "STANDARD_BROKER_FEE"
+        name:
+          type: string
+          maxLength: 200
+          description: Fee name
+          example: "Standard Broker Fee"
+        type:
+          type: string
+          enum: [BROKER_COMMISSION, RISK_ADJUSTMENT, ADMIN_FEE]
+          description: Fee type
+          example: "BROKER_COMMISSION"
+        percentage:
+          type: number
+          format: double
+          minimum: 0.0
+          maximum: 0.5
+          exclusiveMinimum: true
+          description: Fee percentage (0.0 to 0.5)
+          example: 0.05
+        effectiveFrom:
+          type: string
+          format: date
+          description: Effective start date
+          example: "2026-01-01"
+        effectiveTo:
+          type: string
+          format: date
+          nullable: true
+          description: Effective end date (optional)
+          example: "2026-12-31"
+        isActive:
+          type: boolean
+          description: Active status
+          example: true
+
+    UpdateFeeConfigRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 200
+          example: "Updated Broker Fee"
+        percentage:
+          type: number
+          format: double
+          minimum: 0.0
+          maximum: 0.5
+          exclusiveMinimum: true
+          example: 0.06
+        effectiveTo:
+          type: string
+          format: date
+          nullable: true
+          example: "2027-12-31"
+
+    FeeConfigResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [BROKER_COMMISSION, RISK_ADJUSTMENT, ADMIN_FEE]
+        percentage:
+          type: number
+          format: double
+        effectiveFrom:
+          type: string
+          format: date
+        effectiveTo:
+          type: string
+          format: date
+          nullable: true
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PageDtoFeeConfigResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeeConfigResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+
+    # Risk Factor Schemas
+    CreateRiskFactorRequest:
+      type: object
+      required:
+        - level
+        - adjustmentPercentage
+        - active
+      properties:
+        level:
+          type: string
+          enum: [COUNTRY, COUNTY, CITY, BUILDING_TYPE]
+          description: Risk factor level
+          example: "CITY"
+        referenceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Reference ID (country/county/city UUID, null for BUILDING_TYPE)
+        buildingType:
+          type: string
+          enum: [RESIDENTIAL, OFFICE, INDUSTRIAL]
+          nullable: true
+          description: Building type (only for BUILDING_TYPE level)
+        adjustmentPercentage:
+          type: number
+          format: double
+          minimum: -0.5
+          maximum: 1.0
+          description: Adjustment percentage (-0.5 to 1.0)
+          example: 0.15
+        active:
+          type: boolean
+          description: Active status
+          example: true
+
+    UpdateRiskFactorPercentageRequest:
+      type: object
+      required:
+        - adjustmentPercentage
+      properties:
+        adjustmentPercentage:
+          type: number
+          format: double
+          minimum: -0.5
+          maximum: 1.0
+          description: Adjustment percentage (-0.5 to 1.0)
+          example: 0.20
+
+    RiskFactorActionRequest:
+      type: object
+      required:
+        - action
+      properties:
+        action:
+          type: string
+          enum: [ACTIVATE, DEACTIVATE]
+          description: Action to execute
+          example: "ACTIVATE"
+
+    RiskFactorResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        level:
+          type: string
+          enum: [COUNTRY, COUNTY, CITY, BUILDING_TYPE]
+        referenceId:
+          type: string
+          format: uuid
+          nullable: true
+        buildingType:
+          type: string
+          enum: [RESIDENTIAL, OFFICE, INDUSTRIAL]
+          nullable: true
+        adjustmentPercentage:
+          type: number
+          format: double
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PageDtoRiskFactorResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskFactorResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+
+    # Report Schemas
+    PolicyReportResponse:
+      type: object
+      properties:
+        groupingKey:
+          type: string
+          description: Grouping key (country/county/city/broker name)
+          example: "Romania"
+        currencyCode:
+          type: string
+          description: Currency code
+          example: "RON"
+        policyCount:
+          type: integer
+          format: int64
+          description: Number of policies
+          example: 150
+        totalFinalPremium:
+          type: number
+          format: double
+          description: Total final premium in original currency
+          example: 500000.00
+        totalFinalPremiumInBaseCurrency:
+          type: number
+          format: double
+          description: Total final premium converted to base currency
+          example: 100000.00
 
     # Error Schema (RFC 7807 Problem Details)
     ProblemDetail:

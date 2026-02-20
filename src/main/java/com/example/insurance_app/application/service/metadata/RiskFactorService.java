@@ -13,6 +13,7 @@ import com.example.insurance_app.domain.model.metadata.riskfactors.RiskFactorCon
 import com.example.insurance_app.domain.model.metadata.riskfactors.RiskLevel;
 import com.example.insurance_app.domain.model.metadata.riskfactors.vo.AdjustmentPercentage;
 import com.example.insurance_app.domain.model.metadata.riskfactors.vo.RiskTarget;
+import com.example.insurance_app.infrastructure.config.cache.CacheNames;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.riskfactors.RiskFactorConfigurationEntity;
 import com.example.insurance_app.infrastructure.persistence.mapper.RiskFactorEntityMapper;
 import com.example.insurance_app.infrastructure.persistence.repository.geography.CityRepository;
@@ -21,6 +22,8 @@ import com.example.insurance_app.infrastructure.persistence.repository.geography
 import com.example.insurance_app.infrastructure.persistence.repository.metadata.RiskFactorConfigRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,6 +60,7 @@ public class RiskFactorService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = CacheNames.RISK_FACTORS, key = "#pageable.pageNumber + '-' + #pageable.pageSize")
     public PageDto<RiskFactorResponse> listRiskFactors(Pageable pageable) {
         logger.info("Listing risk factor configurations");
 
@@ -79,6 +83,7 @@ public class RiskFactorService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheNames.RISK_FACTORS, allEntries = true)
     public RiskFactorResponse create(CreateRiskFactorRequest req) {
         logger.info("Creating risk factor configuration level={}", req.level());
 
@@ -98,6 +103,7 @@ public class RiskFactorService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheNames.RISK_FACTORS, allEntries = true)
     public RiskFactorResponse updatePercentage(UUID id, UpdateRiskFactorPercentageRequest req) {
         logger.info("Updating risk factor percentage id={}", id);
 
@@ -115,6 +121,7 @@ public class RiskFactorService {
 
 
     @Transactional
+    @CacheEvict(value = CacheNames.RISK_FACTORS, allEntries = true)
     public RiskFactorResponse executeAction(UUID id, RiskFactorActionRequest req) {
         logger.info("Executing action={} on risk factor id={}", req.action(), id);
 
