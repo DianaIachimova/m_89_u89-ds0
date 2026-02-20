@@ -14,7 +14,6 @@ import com.example.insurance_app.application.dto.client.request.CreateClientRequ
 import com.example.insurance_app.application.service.BuildingService;
 import com.example.insurance_app.application.service.ClientService;
 import com.example.insurance_app.infrastructure.persistence.repository.building.BuildingRepository;
-import com.example.insurance_app.infrastructure.persistence.repository.client.ClientRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,8 +45,6 @@ class BuildingControllerIntegrationTest {
     @Autowired
     private BuildingRepository buildingRepository;
 
-    @Autowired
-    private ClientRepository clientRepository;
 
     private UUID clientId;
     private UUID cityId;

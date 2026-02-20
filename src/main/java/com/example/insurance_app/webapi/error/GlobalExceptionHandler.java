@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     public static final String BAD_REQUEST = "Bad Request";
-    Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    public static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(DomainException.class)
     public ProblemDetail handleDomain(DomainException ex, HttpServletRequest req) {

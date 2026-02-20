@@ -1,13 +1,11 @@
 package com.example.insurance_app.application.mapper;
 
-import com.example.insurance_app.application.dto.building.BuildingTypeDto;
 import com.example.insurance_app.application.dto.building.RiskIndicatorsDto;
 import com.example.insurance_app.application.dto.building.response.*;
 import com.example.insurance_app.application.dto.geography.CityResponse;
 import com.example.insurance_app.application.dto.geography.CountryResponse;
 import com.example.insurance_app.application.dto.geography.CountyResponse;
 import com.example.insurance_app.domain.model.building.Building;
-import com.example.insurance_app.domain.model.building.BuildingType;
 import com.example.insurance_app.domain.model.building.vo.BuildingAddress;
 import com.example.insurance_app.domain.model.building.vo.BuildingInfo;
 import com.example.insurance_app.domain.model.building.vo.RiskIndicators;
@@ -15,6 +13,8 @@ import com.example.insurance_app.infrastructure.persistence.entity.geography.Cit
 import com.example.insurance_app.infrastructure.persistence.entity.geography.CountryEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.geography.CountyEntity;
 import org.springframework.stereotype.Component;
+
+import static com.example.insurance_app.application.mapper.EnumDtoMapper.toBuildingTypeDto;
 
 @Component
 public class BuildingResponseMapper {
@@ -92,17 +92,6 @@ public class BuildingResponseMapper {
         );
     }
 
-    private BuildingTypeDto toBuildingTypeDto(BuildingType domain) {
-        if (domain == null) {
-            return null;
-        }
-        return switch (domain) {
-            case RESIDENTIAL -> BuildingTypeDto.RESIDENTIAL;
-            case OFFICE -> BuildingTypeDto.OFFICE;
-            case INDUSTRIAL -> BuildingTypeDto.INDUSTRIAL;
-        };
-    }
-
     public CityResponse toCityResponse(CityEntity city) {
         if (city == null) return null;
         return new CityResponse(city.getId(), city.getName());
@@ -117,6 +106,4 @@ public class BuildingResponseMapper {
         if (country == null) return null;
         return new CountryResponse(country.getId(), country.getName());
     }
-
-
 }

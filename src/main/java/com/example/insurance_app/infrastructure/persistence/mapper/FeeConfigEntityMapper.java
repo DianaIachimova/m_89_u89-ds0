@@ -2,13 +2,14 @@ package com.example.insurance_app.infrastructure.persistence.mapper;
 
 import com.example.insurance_app.domain.model.AuditInfo;
 import com.example.insurance_app.domain.model.metadata.feeconfig.FeeConfiguration;
-import com.example.insurance_app.domain.model.metadata.feeconfig.FeeConfigurationType;
 import com.example.insurance_app.domain.model.metadata.feeconfig.FeeDetails;
 import com.example.insurance_app.domain.model.metadata.feeconfig.vo.*;
-import com.example.insurance_app.infrastructure.persistence.entity.metadata.feeconfig.FeeConfigTypeEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.feeconfig.FeeConfigurationEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.feeconfig.ValidityPeriodEmbeddable;
 import org.springframework.stereotype.Component;
+
+import static com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper.toFeeConfigTypeEntity;
+import static com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper.toFeeConfigurationType;
 
 @Component
 public class FeeConfigEntityMapper {
@@ -73,25 +74,4 @@ public class FeeConfigEntityMapper {
     }
 
 
-    private FeeConfigurationType toFeeConfigurationType(FeeConfigTypeEntity entity) {
-        if (entity == null) {
-            return null;
-        }
-        return switch (entity) {
-            case BROKER_COMMISSION -> FeeConfigurationType.BROKER_COMMISSION;
-            case RISK_ADJUSTMENT -> FeeConfigurationType.RISK_ADJUSTMENT;
-            case ADMIN_FEE -> FeeConfigurationType.ADMIN_FEE;
-        };
-    }
-
-    public FeeConfigTypeEntity toFeeConfigTypeEntity(FeeConfigurationType domain) {
-        if (domain == null) {
-            return null;
-        }
-        return switch (domain) {
-            case BROKER_COMMISSION -> FeeConfigTypeEntity.BROKER_COMMISSION;
-            case RISK_ADJUSTMENT -> FeeConfigTypeEntity.RISK_ADJUSTMENT;
-            case ADMIN_FEE -> FeeConfigTypeEntity.ADMIN_FEE;
-        };
-    }
 }
