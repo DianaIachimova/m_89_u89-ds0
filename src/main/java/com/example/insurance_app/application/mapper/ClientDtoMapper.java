@@ -1,14 +1,13 @@
 package com.example.insurance_app.application.mapper;
 
-import com.example.insurance_app.application.dto.client.ClientTypeDto;
 import com.example.insurance_app.application.dto.client.request.AddressRequest;
 import com.example.insurance_app.application.dto.client.request.ContactInfoRequest;
 import com.example.insurance_app.application.dto.client.request.CreateClientRequest;
 import com.example.insurance_app.application.dto.client.response.*;
-import com.example.insurance_app.domain.model.client.vo.Address;
 import com.example.insurance_app.domain.model.client.Client;
 import com.example.insurance_app.domain.model.client.ClientType;
 import com.example.insurance_app.domain.model.client.ContactInfo;
+import com.example.insurance_app.domain.model.client.vo.Address;
 import com.example.insurance_app.domain.model.client.vo.EmailAddress;
 import com.example.insurance_app.domain.model.client.vo.PhoneNumber;
 import com.example.insurance_app.infrastructure.persistence.entity.client.ClientEntity;
@@ -16,6 +15,9 @@ import com.example.insurance_app.infrastructure.persistence.entity.client.Identi
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+
+import static com.example.insurance_app.application.mapper.EnumDtoMapper.toClientType;
+import static com.example.insurance_app.application.mapper.EnumDtoMapper.toClientTypeDto;
 
 @Component
 public class ClientDtoMapper {
@@ -97,26 +99,6 @@ public class ClientDtoMapper {
                 request.postalCode(),
                 request.country()
         );
-    }
-
-    private ClientType toClientType(ClientTypeDto dto) {
-        if (dto == null) {
-            return null;
-        }
-        return switch (dto) {
-            case INDIVIDUAL -> ClientType.INDIVIDUAL;
-            case COMPANY -> ClientType.COMPANY;
-        };
-    }
-
-    private ClientTypeDto toClientTypeDto(ClientType domain) {
-        if (domain == null) {
-            return null;
-        }
-        return switch (domain) {
-            case INDIVIDUAL -> ClientTypeDto.INDIVIDUAL;
-            case COMPANY -> ClientTypeDto.COMPANY;
-        };
     }
 
     private ContactInfoResponse toContactInfoResponse(ContactInfo contactInfo) {

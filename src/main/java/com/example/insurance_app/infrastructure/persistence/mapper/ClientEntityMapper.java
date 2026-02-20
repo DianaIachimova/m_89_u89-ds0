@@ -9,9 +9,11 @@ import com.example.insurance_app.domain.model.client.vo.EmailAddress;
 import com.example.insurance_app.domain.model.client.vo.PhoneNumber;
 import com.example.insurance_app.infrastructure.persistence.entity.client.AddressEmbeddable;
 import com.example.insurance_app.infrastructure.persistence.entity.client.ClientEntity;
-import com.example.insurance_app.infrastructure.persistence.entity.client.ClientTypeEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.client.ContactInfoEmbeddable;
 import org.springframework.stereotype.Component;
+
+import static com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper.toClientType;
+import static com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper.toClientTypeEntity;
 
 @Component
 public class ClientEntityMapper {
@@ -62,25 +64,6 @@ public class ClientEntityMapper {
         entity.setAddress(toAddressEmbeddable(domain.getAddress()));
     }
 
-    private ClientType toClientType(ClientTypeEntity entity) {
-        if (entity == null) {
-            return null;
-        }
-        return switch (entity) {
-            case INDIVIDUAL -> ClientType.INDIVIDUAL;
-            case COMPANY -> ClientType.COMPANY;
-        };
-    }
-
-    private ClientTypeEntity toClientTypeEntity(ClientType domain) {
-        if (domain == null) {
-            return null;
-        }
-        return switch (domain) {
-            case INDIVIDUAL -> ClientTypeEntity.INDIVIDUAL;
-            case COMPANY -> ClientTypeEntity.COMPANY;
-        };
-    }
 
     private ContactInfo toContactInfo(ContactInfoEmbeddable embeddable) {
         if (embeddable == null) {

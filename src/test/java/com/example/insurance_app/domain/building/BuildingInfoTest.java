@@ -98,16 +98,11 @@ class BuildingInfoTest {
         @Test
         @DisplayName("Should fail when construction year is null")
         void shouldFailWhenConstructionYearIsNull() {
-            // Act & Assert
+            BigDecimal surface = new BigDecimal("150.00");
+            BigDecimal insured = new BigDecimal("200000.00");
             DomainValidationException exception = assertThrows(
                     DomainValidationException.class,
-                    () -> new BuildingInfo(
-                            null,
-                            BuildingType.RESIDENTIAL,
-                            5,
-                            new BigDecimal("150.00"),
-                            new BigDecimal("200000.00")
-                    )
+                    () -> new BuildingInfo(null, BuildingType.RESIDENTIAL, 5, surface, insured)
             );
             assertTrue(exception.getMessage().contains("constructionYear"));
         }
@@ -115,16 +110,11 @@ class BuildingInfoTest {
         @Test
         @DisplayName("Should fail when building type is null")
         void shouldFailWhenBuildingTypeIsNull() {
-            // Act & Assert
+            BigDecimal surface = new BigDecimal("150.00");
+            BigDecimal insured = new BigDecimal("200000.00");
             DomainValidationException exception = assertThrows(
                     DomainValidationException.class,
-                    () -> new BuildingInfo(
-                            2020,
-                            null,
-                            5,
-                            new BigDecimal("150.00"),
-                            new BigDecimal("200000.00")
-                    )
+                    () -> new BuildingInfo(2020, null, 5, surface, insured)
             );
             assertTrue(exception.getMessage().contains("BuildingType"));
         }
@@ -132,16 +122,10 @@ class BuildingInfoTest {
         @Test
         @DisplayName("Should fail when surface area is null")
         void shouldFailWhenSurfaceAreaIsNull() {
-            // Act & Assert
+            BigDecimal insured = new BigDecimal("200000.00");
             DomainValidationException exception = assertThrows(
                     DomainValidationException.class,
-                    () -> new BuildingInfo(
-                            2020,
-                            BuildingType.RESIDENTIAL,
-                            5,
-                            null,
-                            new BigDecimal("200000.00")
-                    )
+                    () -> new BuildingInfo(2020, BuildingType.RESIDENTIAL, 5, null, insured)
             );
             assertTrue(exception.getMessage().contains("surfaceArea"));
         }
@@ -149,16 +133,10 @@ class BuildingInfoTest {
         @Test
         @DisplayName("Should fail when insured value is null")
         void shouldFailWhenInsuredValueIsNull() {
-            // Act & Assert
+            BigDecimal surface = new BigDecimal("150.00");
             DomainValidationException exception = assertThrows(
                     DomainValidationException.class,
-                    () -> new BuildingInfo(
-                            2020,
-                            BuildingType.RESIDENTIAL,
-                            5,
-                            new BigDecimal("150.00"),
-                            null
-                    )
+                    () -> new BuildingInfo(2020, BuildingType.RESIDENTIAL, 5, surface, null)
             );
             assertTrue(exception.getMessage().contains("insuredValue"));
         }
@@ -171,16 +149,11 @@ class BuildingInfoTest {
         @Test
         @DisplayName("Should fail when construction year is too old (before 1800)")
         void shouldFailWhenConstructionYearIsTooOld() {
-            // Act & Assert
+            BigDecimal surface = new BigDecimal("150.00");
+            BigDecimal insured = new BigDecimal("200000.00");
             DomainValidationException exception = assertThrows(
                     DomainValidationException.class,
-                    () -> new BuildingInfo(
-                            1799,
-                            BuildingType.RESIDENTIAL,
-                            5,
-                            new BigDecimal("150.00"),
-                            new BigDecimal("200000.00")
-                    )
+                    () -> new BuildingInfo(1799, BuildingType.RESIDENTIAL, 5, surface, insured)
             );
             assertTrue(exception.getMessage().contains("constructionYear"));
         }
@@ -188,19 +161,12 @@ class BuildingInfoTest {
         @Test
         @DisplayName("Should fail when construction year is in the future")
         void shouldFailWhenConstructionYearIsInFuture() {
-            // Arrange
             int futureYear = java.time.Year.now().getValue() + 1;
-
-            // Act & Assert
+            BigDecimal surface = new BigDecimal("150.00");
+            BigDecimal insured = new BigDecimal("200000.00");
             DomainValidationException exception = assertThrows(
                     DomainValidationException.class,
-                    () -> new BuildingInfo(
-                            futureYear,
-                            BuildingType.RESIDENTIAL,
-                            5,
-                            new BigDecimal("150.00"),
-                            new BigDecimal("200000.00")
-                    )
+                    () -> new BuildingInfo(futureYear, BuildingType.RESIDENTIAL, 5, surface, insured)
             );
             assertTrue(exception.getMessage().contains("constructionYear"));
         }
@@ -248,16 +214,11 @@ class BuildingInfoTest {
         @Test
         @DisplayName("Should fail when number of floors is less than 1")
         void shouldFailWhenNumberOfFloorsIsLessThan1() {
-            // Act & Assert
+            BigDecimal surface = new BigDecimal("150.00");
+            BigDecimal insured = new BigDecimal("200000.00");
             DomainValidationException exception = assertThrows(
                     DomainValidationException.class,
-                    () -> new BuildingInfo(
-                            2020,
-                            BuildingType.RESIDENTIAL,
-                            0,
-                            new BigDecimal("150.00"),
-                            new BigDecimal("200000.00")
-                    )
+                    () -> new BuildingInfo(2020, BuildingType.RESIDENTIAL, 0, surface, insured)
             );
             assertTrue(exception.getMessage().contains("numberOfFloors"));
         }
@@ -265,16 +226,11 @@ class BuildingInfoTest {
         @Test
         @DisplayName("Should fail when number of floors is negative")
         void shouldFailWhenNumberOfFloorsIsNegative() {
-            // Act & Assert
+            BigDecimal surface = new BigDecimal("150.00");
+            BigDecimal insured = new BigDecimal("200000.00");
             DomainValidationException exception = assertThrows(
                     DomainValidationException.class,
-                    () -> new BuildingInfo(
-                            2020,
-                            BuildingType.RESIDENTIAL,
-                            -5,
-                            new BigDecimal("150.00"),
-                            new BigDecimal("200000.00")
-                    )
+                    () -> new BuildingInfo(2020, BuildingType.RESIDENTIAL, -5, surface, insured)
             );
             assertTrue(exception.getMessage().contains("numberOfFloors"));
         }
@@ -282,16 +238,11 @@ class BuildingInfoTest {
         @Test
         @DisplayName("Should fail when number of floors exceeds 200")
         void shouldFailWhenNumberOfFloorsExceeds200() {
-            // Act & Assert
+            BigDecimal surface = new BigDecimal("10000.00");
+            BigDecimal insured = new BigDecimal("50000000.00");
             DomainValidationException exception = assertThrows(
                     DomainValidationException.class,
-                    () -> new BuildingInfo(
-                            2020,
-                            BuildingType.OFFICE,
-                            201,
-                            new BigDecimal("10000.00"),
-                            new BigDecimal("50000000.00")
-                    )
+                    () -> new BuildingInfo(2020, BuildingType.OFFICE, 201, surface, insured)
             );
             assertTrue(exception.getMessage().contains("numberOfFloors"));
         }
@@ -336,16 +287,10 @@ class BuildingInfoTest {
         @Test
         @DisplayName("Should fail when surface area is zero")
         void shouldFailWhenSurfaceAreaIsZero() {
-            // Act & Assert
+            BigDecimal insured = new BigDecimal("200000.00");
             DomainValidationException exception = assertThrows(
                     DomainValidationException.class,
-                    () -> new BuildingInfo(
-                            2020,
-                            BuildingType.RESIDENTIAL,
-                            5,
-                            BigDecimal.ZERO,
-                            new BigDecimal("200000.00")
-                    )
+                    () -> new BuildingInfo(2020, BuildingType.RESIDENTIAL, 5, BigDecimal.ZERO, insured)
             );
             assertTrue(exception.getMessage().contains("surfaceArea"));
         }
@@ -353,16 +298,11 @@ class BuildingInfoTest {
         @Test
         @DisplayName("Should fail when surface area is negative")
         void shouldFailWhenSurfaceAreaIsNegative() {
-            // Act & Assert
+            BigDecimal surface = new BigDecimal("-100.00");
+            BigDecimal insured = new BigDecimal("200000.00");
             DomainValidationException exception = assertThrows(
                     DomainValidationException.class,
-                    () -> new BuildingInfo(
-                            2020,
-                            BuildingType.RESIDENTIAL,
-                            5,
-                            new BigDecimal("-100.00"),
-                            new BigDecimal("200000.00")
-                    )
+                    () -> new BuildingInfo(2020, BuildingType.RESIDENTIAL, 5, surface, insured)
             );
             assertTrue(exception.getMessage().contains("surfaceArea"));
         }
@@ -391,16 +331,10 @@ class BuildingInfoTest {
         @Test
         @DisplayName("Should fail when insured value is zero")
         void shouldFailWhenInsuredValueIsZero() {
-            // Act & Assert
+            BigDecimal surface = new BigDecimal("150.00");
             DomainValidationException exception = assertThrows(
                     DomainValidationException.class,
-                    () -> new BuildingInfo(
-                            2020,
-                            BuildingType.RESIDENTIAL,
-                            5,
-                            new BigDecimal("150.00"),
-                            BigDecimal.ZERO
-                    )
+                    () -> new BuildingInfo(2020, BuildingType.RESIDENTIAL, 5, surface, BigDecimal.ZERO)
             );
             assertTrue(exception.getMessage().contains("insuredValue"));
         }
@@ -408,16 +342,11 @@ class BuildingInfoTest {
         @Test
         @DisplayName("Should fail when insured value is negative")
         void shouldFailWhenInsuredValueIsNegative() {
-            // Act & Assert
+            BigDecimal surface = new BigDecimal("150.00");
+            BigDecimal insured = new BigDecimal("-100000.00");
             DomainValidationException exception = assertThrows(
                     DomainValidationException.class,
-                    () -> new BuildingInfo(
-                            2020,
-                            BuildingType.RESIDENTIAL,
-                            5,
-                            new BigDecimal("150.00"),
-                            new BigDecimal("-100000.00")
-                    )
+                    () -> new BuildingInfo(2020, BuildingType.RESIDENTIAL, 5, surface, insured)
             );
             assertTrue(exception.getMessage().contains("insuredValue"));
         }

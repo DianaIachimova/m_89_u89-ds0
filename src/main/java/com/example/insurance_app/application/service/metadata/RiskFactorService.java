@@ -25,7 +25,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
 import java.util.UUID;
+
+import static com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper.toBuildingTypeEntity;
+import static com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper.toRiskLevelEntity;
 
 @Service
 public class RiskFactorService {
@@ -117,12 +121,11 @@ public class RiskFactorService {
         RiskFactorConfigurationEntity entity = requireRiskFactor(id);
         RiskFactorConfiguration domain = entityMapper.toDomain(entity);
 
-        switch (req.action()) {
-            case ACTIVATE ->  {
-                ensureNoActiveConflict(domain.getTarget());
-                domain.activate();
-            }
-        case DEACTIVATE -> domain.deactivate();
+        if (Objects.requireNonNull(req.action()) == RiskFactorAction.ACTIVATE) {
+            ensureNoActiveConflict(domain.getTarget());
+            domain.activate();
+        } else if (req.action() == RiskFactorAction.DEACTIVATE) {
+            domain.deactivate();
         }
 
         entityMapper.updateEntity(domain, entity);
@@ -144,13 +147,13 @@ public class RiskFactorService {
         boolean conflict;
         if (target.level() == RiskLevel.BUILDING_TYPE) {
             conflict = riskFactorRepository.existsByLevelAndBuildingTypeAndActiveTrue(
-                    entityMapper.toEntityLevel(target.level()),
-                    entityMapper.toEntityBuildingType(target.buildingType())
+                    toRiskLevelEntity(target.level()),
+                    toBuildingTypeEntity(target.buildingType())
             );
         }
         else {
             conflict = riskFactorRepository.existsByLevelAndReferenceIdAndActiveTrue(
-                    entityMapper.toEntityLevel(target.level()),
+                    toRiskLevelEntity(target.level()),
                     target.referenceId()
             );
         }

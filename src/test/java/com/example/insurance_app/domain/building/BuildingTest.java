@@ -23,6 +23,26 @@ class BuildingTest {
     private final UUID clientId = UUID.randomUUID();
     private final UUID cityId = UUID.randomUUID();
 
+    private Building defaultBuilding() {
+        return new Building(
+                new ClientId(clientId),
+                new BuildingAddress("Street", "1"),
+                cityId,
+                new BuildingInfo(2020, BuildingType.RESIDENTIAL, 3, new BigDecimal("100.00"), new BigDecimal("100000.00")),
+                null
+        );
+    }
+
+    private Building buildingWithOriginalData(RiskIndicators risk) {
+        return new Building(
+                new ClientId(clientId),
+                new BuildingAddress("Old Street", "1"),
+                cityId,
+                new BuildingInfo(2020, BuildingType.RESIDENTIAL, 3, new BigDecimal("100.00"), new BigDecimal("100000.00")),
+                risk
+        );
+    }
+
     @Nested
     @DisplayName("Building Creation Tests")
     class BuildingCreationTests {
@@ -126,7 +146,6 @@ class BuildingTest {
         @Test
         @DisplayName("Should fail when address is null")
         void shouldFailWhenAddressIsNull() {
-            // Arrange
             BuildingInfo info = new BuildingInfo(
                     2020,
                     BuildingType.RESIDENTIAL,
@@ -134,17 +153,10 @@ class BuildingTest {
                     new BigDecimal("150.50"),
                     new BigDecimal("200000.00")
             );
-
-            // Act & Assert
+            ClientId ownerId = new ClientId(clientId);
             DomainValidationException exception = assertThrows(
                     DomainValidationException.class,
-                    () -> new Building(
-                            new ClientId(clientId),
-                            null,
-                            cityId,
-                            info,
-                            null
-                    )
+                    () -> new Building(ownerId, null, cityId, info, null)
             );
             assertTrue(exception.getMessage().contains("address"));
         }
@@ -152,7 +164,6 @@ class BuildingTest {
         @Test
         @DisplayName("Should fail when cityId is null")
         void shouldFailWhenCityIdIsNull() {
-            // Arrange
             BuildingAddress address = new BuildingAddress("Main Street", "123");
             BuildingInfo info = new BuildingInfo(
                     2020,
@@ -161,17 +172,10 @@ class BuildingTest {
                     new BigDecimal("150.50"),
                     new BigDecimal("200000.00")
             );
-
-            // Act & Assert
+            ClientId ownerId = new ClientId(clientId);
             DomainValidationException exception = assertThrows(
                     DomainValidationException.class,
-                    () -> new Building(
-                            new ClientId(clientId),
-                            address,
-                            null,
-                            info,
-                            null
-                    )
+                    () -> new Building(ownerId, address, null, info, null)
             );
             assertTrue(exception.getMessage().contains("cityId"));
         }
@@ -179,19 +183,11 @@ class BuildingTest {
         @Test
         @DisplayName("Should fail when building info is null")
         void shouldFailWhenBuildingInfoIsNull() {
-            // Arrange
             BuildingAddress address = new BuildingAddress("Main Street", "123");
-
-            // Act & Assert
+            ClientId ownerId = new ClientId(clientId);
             DomainValidationException exception = assertThrows(
                     DomainValidationException.class,
-                    () -> new Building(
-                            new ClientId(clientId),
-                            address,
-                            cityId,
-                            null,
-                            null
-                    )
+                    () -> new Building(ownerId, address, cityId, null, null)
             );
             assertTrue(exception.getMessage().contains("buildingInfo"));
         }
@@ -204,44 +200,14 @@ class BuildingTest {
         @Test
         @DisplayName("Should update building information successfully")
         void shouldUpdateBuildingInformationSuccessfully() {
-            // Arrange
-            BuildingAddress originalAddress = new BuildingAddress(
-                    "Old Street",
-                    "1");
-
-            BuildingInfo originalInfo = new BuildingInfo(
-                    2020,
-                    BuildingType.RESIDENTIAL,
-                    3,
-                    new BigDecimal("100.00"),
-                    new BigDecimal("100000.00")
-            );
-            RiskIndicators originalRisk = new RiskIndicators(false, false);
-
-            Building building = new Building(
-                    new ClientId(clientId),
-                    originalAddress,
-                    cityId,
-                    originalInfo,
-                    originalRisk
-            );
-
-            // New data
+            Building building = buildingWithOriginalData(new RiskIndicators(false, false));
             BuildingAddress newAddress = new BuildingAddress("New Street", "2B");
-            BuildingInfo newInfo = new BuildingInfo(
-                    2021,
-                    BuildingType.OFFICE,
-                    7,
-                    new BigDecimal("250.00"),
-                    new BigDecimal("300000.00")
-            );
+            BuildingInfo newInfo = new BuildingInfo(2021, BuildingType.OFFICE, 7, new BigDecimal("250.00"), new BigDecimal("300000.00"));
             RiskIndicators newRisk = new RiskIndicators(true, true);
             UUID newCityId = UUID.randomUUID();
 
-            // Act
             building.updateInformation(newAddress, newCityId, newInfo, newRisk);
 
-            // Assert
             assertEquals(newAddress, building.getAddress());
             assertEquals(newCityId, building.getCityId());
             assertEquals(newInfo, building.getBuildingInfo());
@@ -252,39 +218,13 @@ class BuildingTest {
         @Test
         @DisplayName("Should update building keeping same risk indicators when null provided")
         void shouldUpdateBuildingKeepingRiskIndicatorsWhenNull() {
-            // Arrange
-            BuildingAddress address = new BuildingAddress("Old Street", "1");
-            BuildingInfo info = new BuildingInfo(
-                    2020,
-                    BuildingType.RESIDENTIAL,
-                    3,
-                    new BigDecimal("100.00"),
-                    new BigDecimal("100000.00")
-            );
             RiskIndicators originalRisk = new RiskIndicators(false, true);
-
-            Building building = new Building(
-                    new ClientId(clientId),
-                    address,
-                    cityId,
-                    info,
-                    originalRisk
-            );
-
-            // New data
+            Building building = buildingWithOriginalData(originalRisk);
             BuildingAddress newAddress = new BuildingAddress("New Street", "2");
-            BuildingInfo newInfo = new BuildingInfo(
-                    2021,
-                    BuildingType.OFFICE,
-                    5,
-                    new BigDecimal("200.00"),
-                    new BigDecimal("200000.00")
-            );
+            BuildingInfo newInfo = new BuildingInfo(2021, BuildingType.OFFICE, 5, new BigDecimal("200.00"), new BigDecimal("200000.00"));
 
-            // Act
             building.updateInformation(newAddress, cityId, newInfo, null);
 
-            // Assert
             assertEquals(newAddress, building.getAddress());
             assertEquals(newInfo, building.getBuildingInfo());
             assertEquals(originalRisk, building.getRiskIndicators());
@@ -293,21 +233,7 @@ class BuildingTest {
         @Test
         @DisplayName("Should fail to update when address is null")
         void shouldFailToUpdateWhenAddressIsNull() {
-            // Arrange
-            Building building = new Building(
-                    new ClientId(clientId),
-                    new BuildingAddress("Street", "1"),
-                    cityId,
-                    new BuildingInfo(
-                            2020,
-                            BuildingType.RESIDENTIAL,
-                            3,
-                            new BigDecimal("100.00"),
-                            new BigDecimal("100000.00")
-                    ),
-                    null
-            );
-
+            Building building = defaultBuilding();
             BuildingInfo newInfo = new BuildingInfo(
                     2021,
                     BuildingType.OFFICE,
@@ -327,21 +253,7 @@ class BuildingTest {
         @Test
         @DisplayName("Should fail to update when city ID is null")
         void shouldFailToUpdateWhenCityIdIsNull() {
-            // Arrange
-            Building building = new Building(
-                    new ClientId(clientId),
-                    new BuildingAddress("Street", "1"),
-                    cityId,
-                    new BuildingInfo(
-                            2020,
-                            BuildingType.RESIDENTIAL,
-                            3,
-                            new BigDecimal("100.00"),
-                            new BigDecimal("100000.00")
-                    ),
-                    null
-            );
-
+            Building building = defaultBuilding();
             BuildingAddress newAddress = new BuildingAddress("New Street", "2");
             BuildingInfo newInfo = new BuildingInfo(
                     2021,
@@ -362,21 +274,7 @@ class BuildingTest {
         @Test
         @DisplayName("Should fail to update when building info is null")
         void shouldFailToUpdateWhenBuildingInfoIsNull() {
-            // Arrange
-            Building building = new Building(
-                    new ClientId(clientId),
-                    new BuildingAddress("Street", "1"),
-                    cityId,
-                    new BuildingInfo(
-                            2020,
-                            BuildingType.RESIDENTIAL,
-                            3,
-                            new BigDecimal("100.00"),
-                            new BigDecimal("100000.00")
-                    ),
-                    null
-            );
-
+            Building building = defaultBuilding();
             BuildingAddress newAddress = new BuildingAddress("New Street", "2");
 
             // Act & Assert

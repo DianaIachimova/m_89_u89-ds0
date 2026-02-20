@@ -468,7 +468,7 @@ class BuildingServiceTest {
 
             // Assert
             assertEquals(originalOwnerId, existingBuilding.getOwnerId().value());
-            verify(buildingEntityMapper).updateEntity(eq(existingBuilding), eq(buildingEntity), eq(cityEntity));
+            verify(buildingEntityMapper).updateEntity(existingBuilding, buildingEntity, cityEntity);
         }
     }
 

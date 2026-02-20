@@ -134,8 +134,9 @@ class RiskFactorConfigurationTest {
         @Test
         @DisplayName("BUILDING_TYPE requires buildingType, rejects referenceId")
         void buildingTypeValidation() {
+            UUID refId = UUID.randomUUID();
             assertThrows(DomainValidationException.class,
-                    () -> new RiskTarget(RiskLevel.BUILDING_TYPE, UUID.randomUUID(), null));
+                    () -> new RiskTarget(RiskLevel.BUILDING_TYPE, refId, null));
             assertThrows(DomainValidationException.class,
                     () -> new RiskTarget(RiskLevel.BUILDING_TYPE, null, null));
         }
@@ -145,8 +146,10 @@ class RiskFactorConfigurationTest {
         void geoLevelValidation() {
             assertThrows(DomainValidationException.class,
                     () -> new RiskTarget(RiskLevel.COUNTRY, null, null));
+            UUID refId = UUID.randomUUID();
             assertThrows(DomainValidationException.class,
-                    () -> new RiskTarget(RiskLevel.COUNTRY, UUID.randomUUID(), BuildingType.RESIDENTIAL));
+                    () -> new RiskTarget(RiskLevel.COUNTRY, refId, BuildingType.RESIDENTIAL));
         }
     }
 }
+

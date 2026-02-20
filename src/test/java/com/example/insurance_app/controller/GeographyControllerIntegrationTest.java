@@ -161,7 +161,7 @@ class GeographyControllerIntegrationTest {
         assertNotNull(countries);
         assertEquals(1, countries.size()); // Only Romania in test-data.sql
         
-        CountryResponse romania = countries.get(0);
+        CountryResponse romania = countries.getFirst();
         assertEquals("Romania", romania.name());
         assertEquals(ROMANIA_ID, romania.id());
 
@@ -169,7 +169,7 @@ class GeographyControllerIntegrationTest {
         List<CountyResponse> counties = geographyService.getCountiesByCountryId(ROMANIA_ID);
         assertEquals(1, counties.size()); // Only Bucuresti in test-data.sql
         
-        CountyResponse bucuresti = counties.get(0);
+        CountyResponse bucuresti = counties.getFirst();
         assertEquals("Bucuresti", bucuresti.name());
         assertEquals("B", bucuresti.code());
         assertEquals(BUCURESTI_COUNTY_ID, bucuresti.id());
@@ -178,7 +178,7 @@ class GeographyControllerIntegrationTest {
         List<CityResponse> cities = geographyService.getCitiesByCountyId(BUCURESTI_COUNTY_ID);
         assertEquals(1, cities.size()); // Only Sector 1 in test-data.sql
         
-        CityResponse sector1 = cities.get(0);
+        CityResponse sector1 = cities.getFirst();
         assertEquals("Sector 1", sector1.name());
         assertEquals(SECTOR1_CITY_ID, sector1.id());
     }

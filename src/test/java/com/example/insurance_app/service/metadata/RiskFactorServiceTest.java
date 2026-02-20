@@ -15,11 +15,8 @@ import com.example.insurance_app.domain.model.metadata.riskfactors.RiskLevel;
 import com.example.insurance_app.domain.model.metadata.riskfactors.vo.AdjustmentPercentage;
 import com.example.insurance_app.domain.model.metadata.riskfactors.vo.RiskTarget;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.riskfactors.RiskFactorConfigurationEntity;
-import com.example.insurance_app.infrastructure.persistence.entity.metadata.riskfactors.RiskLevelEntity;
 import com.example.insurance_app.infrastructure.persistence.mapper.RiskFactorEntityMapper;
-import com.example.insurance_app.infrastructure.persistence.repository.geography.CityRepository;
 import com.example.insurance_app.infrastructure.persistence.repository.geography.CountryRepository;
-import com.example.insurance_app.infrastructure.persistence.repository.geography.CountyRepository;
 import com.example.insurance_app.infrastructure.persistence.repository.metadata.RiskFactorConfigRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -38,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper.toRiskLevelEntity;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -54,10 +52,6 @@ class RiskFactorServiceTest {
     private RiskFactorDtoMapper dtoMapper;
     @Mock
     private CountryRepository countryRepository;
-    @Mock
-    private CountyRepository countyRepository;
-    @Mock
-    private CityRepository cityRepository;
 
     @InjectMocks
     private RiskFactorService riskFactorService;
@@ -81,8 +75,7 @@ class RiskFactorServiceTest {
 
             when(dtoMapper.toDomain(req)).thenReturn(domain);
             when(countryRepository.existsById(refId)).thenReturn(true);
-            when(entityMapper.toEntityLevel(RiskLevel.COUNTRY)).thenReturn(RiskLevelEntity.COUNTRY);
-            when(riskFactorRepository.existsByLevelAndReferenceIdAndActiveTrue(RiskLevelEntity.COUNTRY, refId)).thenReturn(false);
+            when(riskFactorRepository.existsByLevelAndReferenceIdAndActiveTrue(toRiskLevelEntity(RiskLevel.COUNTRY), refId)).thenReturn(false);
 
             RiskFactorConfigurationEntity entity = mock(RiskFactorConfigurationEntity.class);
             RiskFactorConfigurationEntity saved = mock(RiskFactorConfigurationEntity.class);
@@ -135,8 +128,7 @@ class RiskFactorServiceTest {
 
             when(dtoMapper.toDomain(req)).thenReturn(domain);
             when(countryRepository.existsById(refId)).thenReturn(true);
-            when(entityMapper.toEntityLevel(RiskLevel.COUNTRY)).thenReturn(RiskLevelEntity.COUNTRY);
-            when(riskFactorRepository.existsByLevelAndReferenceIdAndActiveTrue(RiskLevelEntity.COUNTRY, refId)).thenReturn(true);
+            when(riskFactorRepository.existsByLevelAndReferenceIdAndActiveTrue(toRiskLevelEntity(RiskLevel.COUNTRY), refId)).thenReturn(true);
 
             assertThrows(DuplicateResourceException.class, () -> riskFactorService.create(req));
             verify(riskFactorRepository, never()).save(any());
@@ -199,8 +191,7 @@ class RiskFactorServiceTest {
 
             when(riskFactorRepository.findById(id)).thenReturn(Optional.of(entity));
             when(entityMapper.toDomain(entity)).thenReturn(domain);
-            when(entityMapper.toEntityLevel(RiskLevel.COUNTRY)).thenReturn(RiskLevelEntity.COUNTRY);
-            when(riskFactorRepository.existsByLevelAndReferenceIdAndActiveTrue(RiskLevelEntity.COUNTRY, refId)).thenReturn(false);
+            when(riskFactorRepository.existsByLevelAndReferenceIdAndActiveTrue(toRiskLevelEntity(RiskLevel.COUNTRY), refId)).thenReturn(false);
 
             RiskFactorConfigurationEntity saved = mock(RiskFactorConfigurationEntity.class);
             RiskFactorConfiguration result = mock(RiskFactorConfiguration.class);
@@ -254,8 +245,7 @@ class RiskFactorServiceTest {
 
             when(riskFactorRepository.findById(id)).thenReturn(Optional.of(entity));
             when(entityMapper.toDomain(entity)).thenReturn(domain);
-            when(entityMapper.toEntityLevel(RiskLevel.COUNTRY)).thenReturn(RiskLevelEntity.COUNTRY);
-            when(riskFactorRepository.existsByLevelAndReferenceIdAndActiveTrue(RiskLevelEntity.COUNTRY, refId)).thenReturn(true);
+            when(riskFactorRepository.existsByLevelAndReferenceIdAndActiveTrue(toRiskLevelEntity(RiskLevel.COUNTRY), refId)).thenReturn(true);
 
             RiskFactorActionRequest req = new RiskFactorActionRequest(RiskFactorAction.ACTIVATE);
             assertThrows(DuplicateResourceException.class,

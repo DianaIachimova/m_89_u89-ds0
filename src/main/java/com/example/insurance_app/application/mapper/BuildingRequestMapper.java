@@ -1,12 +1,10 @@
 package com.example.insurance_app.application.mapper;
 
-import com.example.insurance_app.application.dto.building.BuildingTypeDto;
 import com.example.insurance_app.application.dto.building.RiskIndicatorsDto;
 import com.example.insurance_app.application.dto.building.request.AddressRequest;
 import com.example.insurance_app.application.dto.building.request.BuildingInfoRequest;
 import com.example.insurance_app.application.dto.building.request.CreateBuildingRequest;
 import com.example.insurance_app.domain.model.building.Building;
-import com.example.insurance_app.domain.model.building.BuildingType;
 import com.example.insurance_app.domain.model.building.vo.BuildingAddress;
 import com.example.insurance_app.domain.model.building.vo.BuildingInfo;
 import com.example.insurance_app.domain.model.building.vo.RiskIndicators;
@@ -14,6 +12,8 @@ import com.example.insurance_app.domain.model.client.vo.ClientId;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+
+import static com.example.insurance_app.application.mapper.EnumDtoMapper.toBuildingType;
 
 @Component
 public class BuildingRequestMapper {
@@ -50,20 +50,4 @@ public class BuildingRequestMapper {
         if (dto == null) return null;
         return new RiskIndicators(dto.floodZone(), dto.earthquakeRiskZone());
     }
-
-    public BuildingType toBuildingType(BuildingTypeDto dto) {
-        if (dto == null) {
-            return null;
-        }
-        return switch (dto) {
-            case RESIDENTIAL -> BuildingType.RESIDENTIAL;
-            case OFFICE -> BuildingType.OFFICE;
-            case INDUSTRIAL -> BuildingType.INDUSTRIAL;
-        };
-    }
-
-
-
-
-
 }

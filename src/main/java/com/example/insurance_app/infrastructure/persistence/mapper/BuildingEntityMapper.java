@@ -1,18 +1,23 @@
 package com.example.insurance_app.infrastructure.persistence.mapper;
 
 import com.example.insurance_app.domain.model.building.Building;
-import com.example.insurance_app.domain.model.building.BuildingType;
 import com.example.insurance_app.domain.model.building.vo.BuildingAddress;
 import com.example.insurance_app.domain.model.building.vo.BuildingId;
 import com.example.insurance_app.domain.model.building.vo.BuildingInfo;
 import com.example.insurance_app.domain.model.building.vo.RiskIndicators;
 import com.example.insurance_app.domain.model.client.vo.ClientId;
-import com.example.insurance_app.infrastructure.persistence.entity.building.*;
+import com.example.insurance_app.infrastructure.persistence.entity.building.AddressEmbeddable;
+import com.example.insurance_app.infrastructure.persistence.entity.building.BuildingEntity;
+import com.example.insurance_app.infrastructure.persistence.entity.building.BuildingInfoEmbeddable;
+import com.example.insurance_app.infrastructure.persistence.entity.building.RiskIndicatorsEmbeddable;
 import com.example.insurance_app.infrastructure.persistence.entity.client.ClientEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.geography.CityEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+
+import static com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper.toBuildingType;
+import static com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper.toBuildingTypeEntity;
 
 
 @Component
@@ -137,25 +142,4 @@ public class BuildingEntityMapper {
         );
     }
 
-    private BuildingType toBuildingType(BuildingTypeEntity entity) {
-        if (entity == null) {
-            return null;
-        }
-        return switch (entity) {
-            case RESIDENTIAL -> BuildingType.RESIDENTIAL;
-            case OFFICE -> BuildingType.OFFICE;
-            case INDUSTRIAL -> BuildingType.INDUSTRIAL;
-        };
-    }
-
-    private BuildingTypeEntity toBuildingTypeEntity(BuildingType domain) {
-        if (domain == null) {
-            return null;
-        }
-        return switch (domain) {
-            case RESIDENTIAL -> BuildingTypeEntity.RESIDENTIAL;
-            case OFFICE -> BuildingTypeEntity.OFFICE;
-            case INDUSTRIAL -> BuildingTypeEntity.INDUSTRIAL;
-        };
-    }
 }
