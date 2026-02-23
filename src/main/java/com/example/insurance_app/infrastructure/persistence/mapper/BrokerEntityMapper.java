@@ -1,9 +1,9 @@
 package com.example.insurance_app.infrastructure.persistence.mapper;
 
+import com.example.insurance_app.domain.model.broker.vo.*;
 import com.example.insurance_app.domain.model.AuditInfo;
 import com.example.insurance_app.domain.model.broker.Broker;
 import com.example.insurance_app.domain.model.broker.BrokerStatus;
-import com.example.insurance_app.domain.model.broker.vo.*;
 import com.example.insurance_app.domain.model.client.vo.EmailAddress;
 import com.example.insurance_app.domain.model.client.vo.PhoneNumber;
 import com.example.insurance_app.infrastructure.persistence.entity.broker.BrokerEntity;

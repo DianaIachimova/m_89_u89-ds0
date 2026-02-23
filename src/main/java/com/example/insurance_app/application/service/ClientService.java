@@ -123,7 +123,9 @@ public class ClientService {
 
     @Transactional(readOnly = true)
     public PageDto<ClientResponse> searchClients(String name, String identificationNumber, Pageable pageable) {
-        logger.info("Searching clients with name: {}, identificationNumber: {}", name, identificationNumber);
+        logger.info("Searching clients with name: {}, identificationNumber: {}",
+                name!=null && !name.isBlank(),
+                identificationNumber!=null && !identificationNumber.isBlank());
 
         var page = clientRepository.searchClients(name, identificationNumber, pageable);
 

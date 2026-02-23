@@ -1,10 +1,10 @@
 package com.example.insurance_app.infrastructure.persistence.entity.policy;
 
+import jakarta.persistence.*;
 import com.example.insurance_app.infrastructure.persistence.entity.broker.BrokerEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.building.BuildingEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.client.ClientEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.CurrencyEntity;
-import jakarta.persistence.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;

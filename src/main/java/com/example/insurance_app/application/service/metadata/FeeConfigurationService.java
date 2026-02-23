@@ -7,7 +7,6 @@ import com.example.insurance_app.application.exception.DuplicateResourceExceptio
 import com.example.insurance_app.application.mapper.FeeConfigDtoMapper;
 import com.example.insurance_app.domain.model.metadata.feeconfig.FeeConfiguration;
 import com.example.insurance_app.infrastructure.config.cache.CacheNames;
-import com.example.insurance_app.infrastructure.persistence.entity.metadata.feeconfig.FeeConfigTypeEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.feeconfig.FeeConfigurationEntity;
 import com.example.insurance_app.infrastructure.persistence.mapper.FeeConfigEntityMapper;
 import com.example.insurance_app.infrastructure.persistence.repository.metadata.FeeConfigRepository;

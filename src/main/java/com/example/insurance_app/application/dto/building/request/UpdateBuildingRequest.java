@@ -2,7 +2,7 @@ package com.example.insurance_app.application.dto.building.request;
 
 import com.example.insurance_app.application.dto.building.RiskIndicatorsDto;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotNull;
 
 
 public record UpdateBuildingRequest(

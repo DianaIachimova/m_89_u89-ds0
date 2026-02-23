@@ -1,5 +1,6 @@
 package com.example.insurance_app.webapi.controller;
 
+import org.springframework.web.bind.annotation.*;
 import com.example.insurance_app.application.dto.building.request.CreateBuildingRequest;
 import com.example.insurance_app.application.dto.building.request.UpdateBuildingRequest;
 import com.example.insurance_app.application.dto.building.response.BuildingDetailedResponse;
@@ -7,7 +8,6 @@ import com.example.insurance_app.application.dto.building.response.BuildingSumma
 import com.example.insurance_app.application.service.BuildingService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;

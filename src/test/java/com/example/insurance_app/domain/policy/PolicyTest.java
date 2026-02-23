@@ -1,5 +1,6 @@
 package com.example.insurance_app.domain.policy;
 
+import com.example.insurance_app.domain.model.policy.vo.*;
 import com.example.insurance_app.domain.exception.DomainValidationException;
 import com.example.insurance_app.domain.model.broker.vo.BrokerId;
 import com.example.insurance_app.domain.model.building.vo.BuildingId;
@@ -7,7 +8,6 @@ import com.example.insurance_app.domain.model.client.vo.ClientId;
 import com.example.insurance_app.domain.model.metadata.currency.vo.CurrencyId;
 import com.example.insurance_app.domain.model.policy.Policy;
 import com.example.insurance_app.domain.model.policy.PolicyStatus;
-import com.example.insurance_app.domain.model.policy.vo.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

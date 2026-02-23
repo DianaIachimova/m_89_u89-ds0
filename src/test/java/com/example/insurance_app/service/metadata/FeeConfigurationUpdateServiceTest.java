@@ -1,5 +1,6 @@
 package com.example.insurance_app.service.metadata;
 
+import com.example.insurance_app.domain.model.metadata.feeconfig.vo.*;
 import com.example.insurance_app.application.dto.metadata.feeconfig.request.UpdateFeeConfigRequest;
 import com.example.insurance_app.application.dto.metadata.feeconfig.response.FeeConfigResponse;
 import com.example.insurance_app.application.exception.ResourceNotFoundException;
@@ -9,7 +10,6 @@ import com.example.insurance_app.application.service.metadata.FeeConfigurationUp
 import com.example.insurance_app.domain.model.metadata.feeconfig.FeeConfiguration;
 import com.example.insurance_app.domain.model.metadata.feeconfig.FeeConfigurationType;
 import com.example.insurance_app.domain.model.metadata.feeconfig.FeeDetails;
-import com.example.insurance_app.domain.model.metadata.feeconfig.vo.*;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.feeconfig.FeeConfigurationEntity;
 import com.example.insurance_app.infrastructure.persistence.mapper.FeeConfigEntityMapper;
 import com.example.insurance_app.infrastructure.persistence.repository.metadata.FeeConfigRepository;
@@ -28,11 +28,11 @@ import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("FeeConfigurationUpdateService Unit Tests")

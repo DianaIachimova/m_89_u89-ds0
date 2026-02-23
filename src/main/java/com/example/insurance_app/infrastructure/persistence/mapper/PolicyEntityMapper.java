@@ -1,5 +1,6 @@
 package com.example.insurance_app.infrastructure.persistence.mapper;
 
+import com.example.insurance_app.domain.model.policy.vo.*;
 import com.example.insurance_app.domain.model.AuditInfo;
 import com.example.insurance_app.domain.model.broker.vo.BrokerId;
 import com.example.insurance_app.domain.model.building.vo.BuildingId;
@@ -7,7 +8,6 @@ import com.example.insurance_app.domain.model.client.vo.ClientId;
 import com.example.insurance_app.domain.model.metadata.currency.vo.CurrencyId;
 import com.example.insurance_app.domain.model.policy.Policy;
 import com.example.insurance_app.domain.model.policy.PolicyStatus;
-import com.example.insurance_app.domain.model.policy.vo.*;
 import com.example.insurance_app.infrastructure.persistence.entity.broker.BrokerEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.building.BuildingEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.client.ClientEntity;

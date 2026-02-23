@@ -1,8 +1,8 @@
 package com.example.insurance_app.infrastructure.persistence.entity.building;
 
+import jakarta.persistence.*;
 import com.example.insurance_app.infrastructure.persistence.entity.client.ClientEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.geography.CityEntity;
-import jakarta.persistence.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;

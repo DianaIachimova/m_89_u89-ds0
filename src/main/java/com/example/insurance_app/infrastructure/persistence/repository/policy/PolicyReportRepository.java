@@ -1,12 +1,12 @@
 package com.example.insurance_app.infrastructure.persistence.repository.policy;
 
+import jakarta.persistence.criteria.*;
 import com.example.insurance_app.application.dto.report.PolicyReportQuery;
 import com.example.insurance_app.infrastructure.persistence.entity.building.BuildingEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.CurrencyEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.policy.PolicyEntity;
 import com.example.insurance_app.infrastructure.persistence.repository.policy.projection.PolicyReportProjection;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.criteria.*;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -19,6 +19,7 @@ import static com.example.insurance_app.infrastructure.persistence.mapper.EnumEn
 @Repository
 public class PolicyReportRepository {
 
+    private static final String POLICY_DETAILS = "policyDetails";
     private final EntityManager entityManager;
 
     public PolicyReportRepository(EntityManager entityManager) {
@@ -37,10 +38,10 @@ public class PolicyReportRepository {
         Expression<String> currencyCodeExpr = currency.get("code");
 
         Expression<Long> policyCount = cb.count(policy);
-        Expression<BigDecimal> totalFinalPremium = cb.sum(policy.get("policyDetails").get("finalPremium"));
+        Expression<BigDecimal> totalFinalPremium = cb.sum(policy.get(POLICY_DETAILS).get("finalPremium"));
         Expression<BigDecimal> totalFinalPremiumInBaseCurrency = cb.sum(
             cb.prod(
-                policy.get("policyDetails").get("finalPremium"),
+                policy.get(POLICY_DETAILS).get("finalPremium"),
                 currency.get("exchangeRateToBase")
             )
         );
@@ -73,8 +74,8 @@ public class PolicyReportRepository {
 
         List<Predicate> predicates = new ArrayList<>();
 
-        predicates.add(cb.greaterThanOrEqualTo(policy.get("policyDetails").get("startDate"), query.from()));
-        predicates.add(cb.lessThanOrEqualTo(policy.get("policyDetails").get("endDate"), query.to()));
+        predicates.add(cb.greaterThanOrEqualTo(policy.get(POLICY_DETAILS).get("startDate"), query.from()));
+        predicates.add(cb.lessThanOrEqualTo(policy.get(POLICY_DETAILS).get("endDate"), query.to()));
 
         if (query.status() != null) {
             predicates.add(cb.equal(policy.get("status"), toPolicyStatusEntity(query.status())));

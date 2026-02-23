@@ -1,9 +1,9 @@
 package com.example.insurance_app.application.mapper;
 
+import com.example.insurance_app.application.dto.client.response.*;
 import com.example.insurance_app.application.dto.client.request.AddressRequest;
 import com.example.insurance_app.application.dto.client.request.ContactInfoRequest;
 import com.example.insurance_app.application.dto.client.request.CreateClientRequest;
-import com.example.insurance_app.application.dto.client.response.*;
 import com.example.insurance_app.domain.model.client.Client;
 import com.example.insurance_app.domain.model.client.ClientType;
 import com.example.insurance_app.domain.model.client.ContactInfo;

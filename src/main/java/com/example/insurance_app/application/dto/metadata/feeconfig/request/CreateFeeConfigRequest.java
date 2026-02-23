@@ -1,7 +1,7 @@
 package com.example.insurance_app.application.dto.metadata.feeconfig.request;
 
-import com.example.insurance_app.application.dto.metadata.feeconfig.FeeConfigTypeDto;
 import jakarta.validation.constraints.*;
+import com.example.insurance_app.application.dto.metadata.feeconfig.FeeConfigTypeDto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 

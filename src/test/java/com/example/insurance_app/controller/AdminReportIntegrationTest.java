@@ -185,10 +185,6 @@ class AdminReportIntegrationTest {
             LocalDate startDate = LocalDate.now().plusDays(1);
             LocalDate endDate = LocalDate.now().plusYears(1);
 
-            PolicyResponse draftPolicy = policyService.createDraft(new CreatePolicyRequest(
-                client.id(), building.id(), BROKER_ID, CURRENCY_RON_ID,
-                new BigDecimal("1000.00"), startDate, endDate
-            ));
 
             PolicyResponse activePolicy = policyService.createDraft(new CreatePolicyRequest(
                 client.id(), building.id(), BROKER_ID, CURRENCY_RON_ID,

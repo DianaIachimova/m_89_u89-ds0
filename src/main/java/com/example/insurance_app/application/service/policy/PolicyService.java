@@ -1,5 +1,6 @@
 package com.example.insurance_app.application.service.policy;
 
+import com.example.insurance_app.domain.model.policy.vo.*;
 import com.example.insurance_app.application.dto.PageDto;
 import com.example.insurance_app.application.dto.policy.request.CancelPolicyRequest;
 import com.example.insurance_app.application.dto.policy.request.CreatePolicyRequest;
@@ -18,7 +19,6 @@ import com.example.insurance_app.domain.model.building.vo.RiskIndicators;
 import com.example.insurance_app.domain.model.client.vo.ClientId;
 import com.example.insurance_app.domain.model.metadata.currency.vo.CurrencyId;
 import com.example.insurance_app.domain.model.policy.Policy;
-import com.example.insurance_app.domain.model.policy.vo.*;
 import com.example.insurance_app.domain.util.DomainAssertions;
 import com.example.insurance_app.infrastructure.persistence.entity.broker.BrokerEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.building.BuildingEntity;
@@ -174,7 +174,7 @@ public class PolicyService {
                                                 LocalDate startFrom,
                                                 LocalDate startTo,
                                                 Pageable pageable) {
-        logger.info("Listing policies clientId={} brokerId={} status={}", clientId, brokerId, status);
+        logger.info("Listing policies clientId={} brokerId={}", clientId, brokerId);
 
         var spec = PolicySpecifications.withFilters(clientId, brokerId, status, startFrom, startTo);
         var page = policyRepo.findAll(spec, pageable);

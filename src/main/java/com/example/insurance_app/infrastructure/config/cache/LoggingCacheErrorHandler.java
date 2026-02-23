@@ -10,27 +10,32 @@ public class LoggingCacheErrorHandler implements CacheErrorHandler {
 
     @Override
     public void handleCacheGetError(RuntimeException exception, Cache cache, Object key) {
-        log.warn("Cache GET error (cache={}, key={}) -> fallback to DB. {}",
-                safe(cache), safeKey(key), exception.toString());
+        if(log.isWarnEnabled())
+            log.warn("Cache GET error (cache={}, key={}) -> fallback to DB. {}",
+                    safe(cache), safeKey(key), exception.toString());
     }
 
     @Override
     public void handleCachePutError(RuntimeException exception, Cache cache, Object key, Object value) {
-        log.warn("Cache PUT error (cache={}, key={}) -> ignoring. {}",
+        if(log.isWarnEnabled())
+            log.warn("Cache PUT error (cache={}, key={}) -> ignoring. {}",
                 safe(cache), safeKey(key), exception.toString());
     }
 
     @Override
     public void handleCacheEvictError(RuntimeException exception, Cache cache, Object key) {
-        log.warn("Cache EVICT error (cache={}, key={}) -> ignoring. {}",
+        if(log.isWarnEnabled())
+            log.warn("Cache EVICT error (cache={}, key={}) -> ignoring. {}",
                 safe(cache), safeKey(key), exception.toString());
     }
 
     @Override
     public void handleCacheClearError(RuntimeException exception, Cache cache) {
-        log.warn("Cache CLEAR error (cache={}) -> ignoring. {}",
+        if(log.isWarnEnabled())
+            log.warn("Cache CLEAR error (cache={}) -> ignoring. {}",
                 safe(cache), exception.toString());
     }
+
 
     private static String safe(Cache cache) {
         return cache != null ? cache.getName() : "null";

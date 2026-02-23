@@ -1,7 +1,7 @@
 package com.example.insurance_app.domain.model.policy;
 
-import com.example.insurance_app.domain.model.AuditInfo;
 import com.example.insurance_app.domain.model.policy.vo.*;
+import com.example.insurance_app.domain.model.AuditInfo;
 import com.example.insurance_app.domain.util.DomainAssertions;
 
 import java.time.LocalDate;

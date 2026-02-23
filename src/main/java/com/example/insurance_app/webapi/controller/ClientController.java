@@ -1,5 +1,6 @@
 package com.example.insurance_app.webapi.controller;
 
+import org.springframework.web.bind.annotation.*;
 import com.example.insurance_app.application.dto.PageDto;
 import com.example.insurance_app.application.dto.client.request.CreateClientRequest;
 import com.example.insurance_app.application.dto.client.request.UpdateClientRequest;
@@ -10,7 +11,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
