@@ -19,6 +19,7 @@ import com.example.insurance_app.infrastructure.persistence.mapper.RiskFactorEnt
 import com.example.insurance_app.infrastructure.persistence.repository.geography.CityRepository;
 import com.example.insurance_app.infrastructure.persistence.repository.geography.CountryRepository;
 import com.example.insurance_app.infrastructure.persistence.repository.geography.CountyRepository;
+import com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper;
 import com.example.insurance_app.infrastructure.persistence.repository.metadata.RiskFactorConfigRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +39,7 @@ public class RiskFactorService {
     private final RiskFactorConfigRepository riskFactorRepository;
     private final RiskFactorEntityMapper entityMapper;
     private final RiskFactorDtoMapper dtoMapper;
-    private final com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper enumEntityMapper;
+    private final EnumEntityMapper enumEntityMapper;
     private final CountryRepository countryRepository;
     private final CountyRepository countyRepository;
     private final CityRepository cityRepository;
@@ -46,7 +47,7 @@ public class RiskFactorService {
     public RiskFactorService(RiskFactorConfigRepository riskFactorRepository,
                              RiskFactorEntityMapper entityMapper,
                              RiskFactorDtoMapper dtoMapper,
-                             com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper enumEntityMapper,
+                             EnumEntityMapper enumEntityMapper,
                              CountryRepository countryRepository,
                              CountyRepository countyRepository,
                              CityRepository cityRepository) {
@@ -127,13 +128,7 @@ public class RiskFactorService {
 
         RiskFactorConfigurationEntity entity = requireRiskFactor(id);
         RiskFactorConfiguration domain = entityMapper.toDomain(entity);
-
-        if (Objects.requireNonNull(req.action()) == RiskFactorAction.ACTIVATE) {
-            ensureNoActiveConflict(domain.getTarget());
-            domain.activate();
-        } else if (req.action() == RiskFactorAction.DEACTIVATE) {
-            domain.deactivate();
-        }
+        applyAction(domain, Objects.requireNonNull(req.action()));
 
         entityMapper.updateEntity(domain, entity);
         RiskFactorConfigurationEntity saved = riskFactorRepository.save(entity);
@@ -141,6 +136,16 @@ public class RiskFactorService {
 
         logger.info("Risk factor action={} completed for id={}", req.action(), id);
         return dtoMapper.toResponse(result);
+    }
+
+    private void applyAction(RiskFactorConfiguration domain, RiskFactorAction action) {
+        switch (action) {
+            case ACTIVATE -> {
+                ensureNoActiveConflict(domain.getTarget());
+                domain.activate();
+            }
+            case DEACTIVATE -> domain.deactivate();
+        }
     }
 
 
@@ -151,39 +156,38 @@ public class RiskFactorService {
 
 
     private void ensureNoActiveConflict(RiskTarget target) {
-        boolean conflict;
+        if (hasActiveConflict(target)) {
+            String targetDesc = target.level() + ":" + (target.referenceId() != null ? target.referenceId() : target.buildingType());
+            throw new DuplicateResourceException("RiskFactorConfiguration", "target", targetDesc);
+        }
+    }
+
+    private boolean hasActiveConflict(RiskTarget target) {
         if (target.level() == RiskLevel.BUILDING_TYPE) {
-            conflict = riskFactorRepository.existsByLevelAndBuildingTypeAndActiveTrue(
+            return riskFactorRepository.existsByLevelAndBuildingTypeAndActiveTrue(
                     enumEntityMapper.toRiskLevelEntity(target.level()),
-                    enumEntityMapper.toBuildingTypeEntity(target.buildingType())
-            );
+                    enumEntityMapper.toBuildingTypeEntity(target.buildingType()));
         }
-        else {
-            conflict = riskFactorRepository.existsByLevelAndReferenceIdAndActiveTrue(
-                    enumEntityMapper.toRiskLevelEntity(target.level()),
-                    target.referenceId()
-            );
-        }
-
-        if (conflict) throw new DuplicateResourceException("RiskFactorConfiguration", "target",
-                    target.level() + ":" + (target.referenceId() != null ? target.referenceId() : target.buildingType()));
-
+        return riskFactorRepository.existsByLevelAndReferenceIdAndActiveTrue(
+                enumEntityMapper.toRiskLevelEntity(target.level()),
+                target.referenceId());
     }
 
     private void validateGeographyReference(RiskTarget target) {
-        if (target.level() == RiskLevel.BUILDING_TYPE) {
-            return;
+        if (target.level() == RiskLevel.BUILDING_TYPE) return;
+        if (!geographyExists(target)) {
+            throw new ResourceNotFoundException(target.level().name(), "id", target.referenceId());
         }
+    }
 
+    private boolean geographyExists(RiskTarget target) {
         UUID refId = target.referenceId();
-        boolean exists = switch (target.level()) {
+        return switch (target.level()) {
             case COUNTRY -> countryRepository.existsById(refId);
             case COUNTY -> countyRepository.existsById(refId);
             case CITY -> cityRepository.existsById(refId);
             default -> false;
         };
-
-        if (!exists) throw new ResourceNotFoundException(target.level().name(), "id", refId);
     }
 }
 
