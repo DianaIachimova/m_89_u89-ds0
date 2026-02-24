@@ -9,22 +9,16 @@ import com.example.insurance_app.domain.model.building.vo.BuildingAddress;
 import com.example.insurance_app.domain.model.building.vo.BuildingInfo;
 import com.example.insurance_app.domain.model.building.vo.RiskIndicators;
 import com.example.insurance_app.domain.model.client.vo.ClientId;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 import java.util.UUID;
 
-@Component
-public class BuildingRequestMapper {
+@Mapper(componentModel = "spring", uses = EnumDtoMapper.class)
+public interface BuildingRequestMapper {
 
-    private final EnumDtoMapper enumDtoMapper;
-
-    public BuildingRequestMapper(EnumDtoMapper enumDtoMapper) {
-        this.enumDtoMapper = enumDtoMapper;
-    }
-
-    public Building toDomain(UUID ownerId, UUID cityId, CreateBuildingRequest request) {
+    default Building toDomain(UUID ownerId, UUID cityId, CreateBuildingRequest request) {
         if (request == null) return null;
-
         return new Building(
                 new ClientId(ownerId),
                 toBuildingAddress(request.address()),
@@ -34,25 +28,11 @@ public class BuildingRequestMapper {
         );
     }
 
-    public BuildingAddress toBuildingAddress(AddressRequest dto) {
-        if (dto == null) return null;
-        return new BuildingAddress(dto.street(), dto.streetNumber());
-    }
+    BuildingAddress toBuildingAddress(AddressRequest dto);
 
-    public BuildingInfo toBuildingInfo(BuildingInfoRequest dto) {
-        if (dto == null) return null;
+    @Mapping(target = "type", source = "buildingType")
+    BuildingInfo toBuildingInfo(BuildingInfoRequest dto);
 
-        return new BuildingInfo(
-                dto.constructionYear(),
-                enumDtoMapper.toBuildingType(dto.buildingType()),
-                dto.numberOfFloors(),
-                dto.surfaceArea(),
-                dto.insuredValue()
-        );
-    }
-
-    public RiskIndicators toRiskIndicators(RiskIndicatorsDto dto) {
-        if (dto == null) return null;
-        return new RiskIndicators(dto.floodZone(), dto.earthquakeRiskZone());
-    }
+    @Mapping(target = "earthquakeZone", source = "earthquakeRiskZone")
+    RiskIndicators toRiskIndicators(RiskIndicatorsDto dto);
 }

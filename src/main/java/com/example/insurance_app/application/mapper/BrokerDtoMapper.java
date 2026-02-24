@@ -10,43 +10,35 @@ import com.example.insurance_app.domain.model.broker.vo.CommissionPercentage;
 import com.example.insurance_app.domain.model.broker.vo.ContactInfo;
 import com.example.insurance_app.domain.model.client.vo.EmailAddress;
 import com.example.insurance_app.domain.model.client.vo.PhoneNumber;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
-@Component
-public class BrokerDtoMapper {
+@Mapper(componentModel = "spring")
+public interface BrokerDtoMapper {
 
-    public Broker toDomain(CreateBrokerRequest request) {
+    default Broker toDomain(CreateBrokerRequest request) {
         if (request == null) return null;
-
         ContactInfo contactInfo = new ContactInfo(
                 new EmailAddress(request.email()),
                 request.phone() != null ? new PhoneNumber(request.phone()) : null
         );
-
         return Broker.createNew(
                 new BrokerCode(request.brokerCode()),
                 new BrokerName(request.name()),
                 contactInfo,
                 Boolean.TRUE.equals(request.active()) ? BrokerStatus.ACTIVE : BrokerStatus.INACTIVE,
-                request.commissionPercentage() != null
-                        ? new CommissionPercentage(request.commissionPercentage())
-                        : null
+                request.commissionPercentage() != null ? new CommissionPercentage(request.commissionPercentage()) : null
         );
     }
 
-    public BrokerResponse toResponse(Broker domain) {
-        if (domain == null) return null;
-
-        return new BrokerResponse(
-                domain.getId() != null ? domain.getId().value() : null,
-                domain.getCode().value(),
-                domain.getName().value(),
-                domain.getContactInfo().email().value(),
-                domain.getContactInfo().phone() != null ? domain.getContactInfo().phone().value() : null,
-                domain.getStatus().name(),
-                domain.getCommissionPercentage() != null ? domain.getCommissionPercentage().value() : null,
-                domain.getAudit().createdAt(),
-                domain.getAudit().updatedAt()
-        );
-    }
+    @Mapping(target = "id", expression = "java(domain.getId() != null ? domain.getId().value() : null)")
+    @Mapping(target = "brokerCode", source = "code.value")
+    @Mapping(target = "name", source = "name.value")
+    @Mapping(target = "email", source = "contactInfo.email.value")
+    @Mapping(target = "phone", expression = "java(domain.getContactInfo().phone() != null ? domain.getContactInfo().phone().value() : null)")
+    @Mapping(target = "status", expression = "java(domain.getStatus().name())")
+    @Mapping(target = "commissionPercentage", expression = "java(domain.getCommissionPercentage() != null ? domain.getCommissionPercentage().value() : null)")
+    @Mapping(target = "createdAt", source = "audit.createdAt")
+    @Mapping(target = "updatedAt", source = "audit.updatedAt")
+    BrokerResponse toResponse(Broker domain);
 }

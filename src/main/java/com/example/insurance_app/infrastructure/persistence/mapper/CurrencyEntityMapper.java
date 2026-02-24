@@ -7,15 +7,14 @@ import com.example.insurance_app.domain.model.metadata.currency.vo.CurrencyId;
 import com.example.insurance_app.domain.model.metadata.currency.vo.CurrencyName;
 import com.example.insurance_app.domain.model.metadata.currency.vo.ExchangeRateToBase;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.CurrencyEntity;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
-@Component
-public class CurrencyEntityMapper {
+@Mapper(componentModel = "spring")
+public interface CurrencyEntityMapper {
 
-    public Currency toDomain(CurrencyEntity entity) {
-        if (entity == null)
-            return null;
-
+    default Currency toDomain(CurrencyEntity entity) {
+        if (entity == null) return null;
         return Currency.rehydrate(
                 new CurrencyId(entity.getId()),
                 new CurrencyCode(entity.getCode()),
@@ -24,26 +23,16 @@ public class CurrencyEntityMapper {
                 entity.isActive(),
                 new AuditInfo(entity.getCreatedAt(), entity.getUpdatedAt())
         );
-
     }
 
-    public CurrencyEntity toEntity(Currency domain) {
-        if (domain == null)
-            return null;
+    @Mapping(target = "id", source = "id.value")
+    @Mapping(target = "code", source = "code.code")
+    @Mapping(target = "name", source = "name.name")
+    @Mapping(target = "exchangeRateToBase", source = "exchangeRate.exchangeRate")
+    CurrencyEntity toEntity(Currency domain);
 
-        return new CurrencyEntity(
-                domain.getId() != null ? domain.getId().value() : null,
-                domain.getCode().code(),
-                domain.getName().name(),
-                domain.getExchangeRate().exchangeRate(),
-                domain.isActive()
-        );
-    }
-
-    public void updateEntity(Currency domain, CurrencyEntity entity) {
-        if (domain == null || entity == null)
-            return;
-
+    default void updateEntity(Currency domain, CurrencyEntity entity) {
+        if (domain == null || entity == null) return;
         entity.setActive(domain.isActive());
     }
 }

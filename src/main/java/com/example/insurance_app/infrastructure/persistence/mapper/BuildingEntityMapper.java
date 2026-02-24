@@ -1,15 +1,9 @@
 package com.example.insurance_app.infrastructure.persistence.mapper;
 
 import com.example.insurance_app.domain.model.building.Building;
-import com.example.insurance_app.domain.model.building.vo.BuildingAddress;
 import com.example.insurance_app.domain.model.building.vo.BuildingId;
-import com.example.insurance_app.domain.model.building.vo.BuildingInfo;
-import com.example.insurance_app.domain.model.building.vo.RiskIndicators;
 import com.example.insurance_app.domain.model.client.vo.ClientId;
-import com.example.insurance_app.infrastructure.persistence.entity.building.AddressEmbeddable;
 import com.example.insurance_app.infrastructure.persistence.entity.building.BuildingEntity;
-import com.example.insurance_app.infrastructure.persistence.entity.building.BuildingInfoEmbeddable;
-import com.example.insurance_app.infrastructure.persistence.entity.building.RiskIndicatorsEmbeddable;
 import com.example.insurance_app.infrastructure.persistence.entity.client.ClientEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.geography.CityEntity;
 import org.springframework.stereotype.Component;
@@ -19,25 +13,50 @@ import java.util.UUID;
 @Component
 public class BuildingEntityMapper {
 
-    private final EnumEntityMapper enumEntityMapper;
+    private final BuildingAddressEmbeddableMapper addressMapper;
+    private final BuildingInfoEmbeddableMapper buildingInfoMapper;
+    private final BuildingRiskIndicatorsMapper riskIndicatorsMapper;
 
-    public BuildingEntityMapper(EnumEntityMapper enumEntityMapper) {
-        this.enumEntityMapper = enumEntityMapper;
+    public BuildingEntityMapper(BuildingAddressEmbeddableMapper addressMapper,
+                                BuildingInfoEmbeddableMapper buildingInfoMapper,
+                                BuildingRiskIndicatorsMapper riskIndicatorsMapper) {
+        this.addressMapper = addressMapper;
+        this.buildingInfoMapper = buildingInfoMapper;
+        this.riskIndicatorsMapper = riskIndicatorsMapper;
     }
 
     public Building toDomain(BuildingEntity entity) {
-        if (entity == null) {
-            return null;
-        }
+        if (entity == null) return null;
 
         return new Building(
                 new BuildingId(entity.getId()),
                 new ClientId(extractOwnerId(entity)),
-                toAddress(entity.getAddress()),
+                addressMapper.toDomain(entity.getAddress()),
                 extractCityId(entity),
-                toBuildingInfo(entity.getBuildingInfo()),
-                toRiskIndicators(entity.getRisk())
+                buildingInfoMapper.toDomain(entity.getBuildingInfo()),
+                riskIndicatorsMapper.toDomain(entity.getRisk())
         );
+    }
+
+    public BuildingEntity toEntity(Building domain, ClientEntity owner, CityEntity city) {
+        if (domain == null) return null;
+
+        return new BuildingEntity(
+                domain.getId() != null ? domain.getId().value() : null,
+                owner,
+                city,
+                addressMapper.toEmbeddable(domain.getAddress()),
+                buildingInfoMapper.toEmbeddable(domain.getBuildingInfo()),
+                riskIndicatorsMapper.toEmbeddable(domain.getRiskIndicators())
+        );
+    }
+
+    public void updateEntity(Building domain, BuildingEntity entity, CityEntity city) {
+        if (domain == null || entity == null || city == null) return;
+        entity.setCity(city);
+        entity.setAddress(addressMapper.toEmbeddable(domain.getAddress()));
+        entity.setBuildingInfo(buildingInfoMapper.toEmbeddable(domain.getBuildingInfo()));
+        entity.setRisk(riskIndicatorsMapper.toEmbeddable(domain.getRiskIndicators()));
     }
 
     private static UUID extractOwnerId(BuildingEntity entity) {
@@ -49,99 +68,4 @@ public class BuildingEntityMapper {
         CityEntity city = entity.getCity();
         return city != null ? city.getId() : null;
     }
-
-    public BuildingEntity toEntity(Building domain, ClientEntity owner, CityEntity city) {
-        if (domain == null) {
-            return null;
-        }
-
-        return new BuildingEntity(
-                domain.getId() != null ? domain.getId().value() : null,
-                owner,
-                city,
-                toAddressEmbeddable(domain.getAddress()),
-                toBuildingInfoEmbeddable(domain.getBuildingInfo()),
-                toRiskIndicatorsEmbeddable(domain.getRiskIndicators())
-
-        );
-    }
-
-    public void updateEntity(Building domain, BuildingEntity entity, CityEntity city) {
-        if (domain == null || entity == null || city == null) {
-            return;
-        }
-        entity.setCity(city);
-        entity.setAddress(toAddressEmbeddable(domain.getAddress()));
-        entity.setBuildingInfo(toBuildingInfoEmbeddable(domain.getBuildingInfo()));
-        entity.setRisk(toRiskIndicatorsEmbeddable(domain.getRiskIndicators()));
-    }
-
-    private BuildingInfo toBuildingInfo(BuildingInfoEmbeddable embeddable) {
-        if (embeddable == null) {
-            return null;
-        }
-
-        return new BuildingInfo(
-                embeddable.getConstructionYear(),
-                enumEntityMapper.toBuildingType(embeddable.getBuildingType()),
-                embeddable.getNumberOfFloors(),
-                embeddable.getSurfaceArea(),
-                embeddable.getInsuredValue()
-        );
-    }
-
-    private BuildingInfoEmbeddable toBuildingInfoEmbeddable(BuildingInfo info) {
-        if (info == null) {
-            return null;
-        }
-
-        return new BuildingInfoEmbeddable(
-                info.constructionYear(),
-                enumEntityMapper.toBuildingTypeEntity(info.type()),
-                info.numberOfFloors(),
-                info.surfaceArea(),
-                info.insuredValue()
-        );
-    }
-
-    private AddressEmbeddable toAddressEmbeddable(BuildingAddress address) {
-        if (address == null) {
-            return null;
-        }
-        return new AddressEmbeddable(
-                address.street(),
-                address.streetNumber()
-        );
-    }
-
-    private BuildingAddress toAddress(AddressEmbeddable embeddable) {
-        if (embeddable == null) {
-            return null;
-        }
-        return new BuildingAddress(
-                embeddable.getStreet(),
-                embeddable.getStreetNumber()
-        );
-    }
-
-    private RiskIndicators toRiskIndicators(RiskIndicatorsEmbeddable embeddable) {
-        if (embeddable == null) {
-            return null;
-        }
-        return new RiskIndicators(
-                embeddable.isFloodZone(),
-                embeddable.isEarthquakeRiskZone()
-        );
-    }
-
-    private RiskIndicatorsEmbeddable toRiskIndicatorsEmbeddable(RiskIndicators risk) {
-        if (risk == null) {
-            return null;
-        }
-        return new RiskIndicatorsEmbeddable(
-                risk.floodZone(),
-                risk.earthquakeZone()
-        );
-    }
-
 }
