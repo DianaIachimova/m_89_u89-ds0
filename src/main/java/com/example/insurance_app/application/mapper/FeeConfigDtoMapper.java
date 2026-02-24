@@ -11,11 +11,14 @@ import com.example.insurance_app.domain.model.metadata.feeconfig.vo.FeeName;
 import com.example.insurance_app.domain.model.metadata.feeconfig.vo.FeePercentage;
 import org.springframework.stereotype.Component;
 
-import static com.example.insurance_app.application.mapper.EnumDtoMapper.toFeeConfigTypeDto;
-import static com.example.insurance_app.application.mapper.EnumDtoMapper.toFeeConfigurationType;
-
 @Component
 public class FeeConfigDtoMapper {
+
+    private final EnumDtoMapper enumDtoMapper;
+
+    public FeeConfigDtoMapper(EnumDtoMapper enumDtoMapper) {
+        this.enumDtoMapper = enumDtoMapper;
+    }
 
     public FeeConfiguration toDomain(CreateFeeConfigRequest req) {
         if (req == null)
@@ -24,7 +27,7 @@ public class FeeConfigDtoMapper {
         var details = FeeDetails.of(
                 new FeeCode(req.code()),
                 new FeeName(req.name()),
-                toFeeConfigurationType(req.type()),
+                enumDtoMapper.toFeeConfigurationType(req.type()),
                 new FeePercentage(req.percentage()),
                 new EffectivePeriod(req.effectiveFrom(), req.effectiveTo())
         );
@@ -44,7 +47,7 @@ public class FeeConfigDtoMapper {
                 domain.getId() != null ? domain.getId().value() : null,
                 domain.getDetails().code().value(),
                 domain.getDetails().name().value(),
-                toFeeConfigTypeDto(domain.getDetails().type()),
+                enumDtoMapper.toFeeConfigTypeDto(domain.getDetails().type()),
                 domain.getDetails().percentage().value(),
                 domain.getDetails().period().from(),
                 domain.getDetails().period().to(),

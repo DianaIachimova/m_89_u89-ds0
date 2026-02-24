@@ -7,10 +7,14 @@ import com.example.insurance_app.domain.model.metadata.riskfactors.vo.Adjustment
 import com.example.insurance_app.domain.model.metadata.riskfactors.vo.RiskTarget;
 import org.springframework.stereotype.Component;
 
-import static com.example.insurance_app.application.mapper.EnumDtoMapper.*;
-
 @Component
 public class RiskFactorDtoMapper {
+
+    private final EnumDtoMapper enumDtoMapper;
+
+    public RiskFactorDtoMapper(EnumDtoMapper enumDtoMapper) {
+        this.enumDtoMapper = enumDtoMapper;
+    }
 
     public RiskFactorConfiguration toDomain(CreateRiskFactorRequest req) {
         if (req == null) {
@@ -18,9 +22,9 @@ public class RiskFactorDtoMapper {
         }
 
         RiskTarget target = new RiskTarget(
-                toRiskLevel(req.level()),
+                enumDtoMapper.toRiskLevel(req.level()),
                 req.referenceId(),
-                toBuildingType(req.buildingType())
+                enumDtoMapper.toBuildingType(req.buildingType())
         );
 
         return RiskFactorConfiguration.createNew(
@@ -37,9 +41,9 @@ public class RiskFactorDtoMapper {
 
         return new RiskFactorResponse(
                 domain.getId() != null ? domain.getId().value() : null,
-                toRiskLevelDto(domain.getTarget().level()),
+                enumDtoMapper.toRiskLevelDto(domain.getTarget().level()),
                 domain.getTarget().referenceId(),
-                toBuildingTypeDto(domain.getTarget().buildingType()),
+                enumDtoMapper.toBuildingTypeDto(domain.getTarget().buildingType()),
                 domain.getPercentage().value(),
                 domain.isActive(),
                 domain.getAudit().createdAt(),

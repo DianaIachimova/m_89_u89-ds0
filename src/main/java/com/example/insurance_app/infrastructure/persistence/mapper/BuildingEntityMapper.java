@@ -16,12 +16,14 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
-import static com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper.toBuildingType;
-import static com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper.toBuildingTypeEntity;
-
-
 @Component
 public class BuildingEntityMapper {
+
+    private final EnumEntityMapper enumEntityMapper;
+
+    public BuildingEntityMapper(EnumEntityMapper enumEntityMapper) {
+        this.enumEntityMapper = enumEntityMapper;
+    }
 
     public Building toDomain(BuildingEntity entity) {
         if (entity == null) {
@@ -81,7 +83,7 @@ public class BuildingEntityMapper {
 
         return new BuildingInfo(
                 embeddable.getConstructionYear(),
-                toBuildingType(embeddable.getBuildingType()),
+                enumEntityMapper.toBuildingType(embeddable.getBuildingType()),
                 embeddable.getNumberOfFloors(),
                 embeddable.getSurfaceArea(),
                 embeddable.getInsuredValue()
@@ -95,7 +97,7 @@ public class BuildingEntityMapper {
 
         return new BuildingInfoEmbeddable(
                 info.constructionYear(),
-                toBuildingTypeEntity(info.type()),
+                enumEntityMapper.toBuildingTypeEntity(info.type()),
                 info.numberOfFloors(),
                 info.surfaceArea(),
                 info.insuredValue()

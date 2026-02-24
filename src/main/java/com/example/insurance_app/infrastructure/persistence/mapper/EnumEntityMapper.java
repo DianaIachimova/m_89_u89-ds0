@@ -10,90 +10,28 @@ import com.example.insurance_app.infrastructure.persistence.entity.client.Client
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.feeconfig.FeeConfigTypeEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.riskfactors.RiskLevelEntity;
 import com.example.insurance_app.infrastructure.persistence.entity.policy.PolicyStatusEntity;
+import org.mapstruct.Mapper;
 
-public final class EnumEntityMapper {
+@Mapper(componentModel = "spring")
+public interface EnumEntityMapper {
 
-    private EnumEntityMapper() {}
+    BuildingTypeEntity toBuildingTypeEntity(BuildingType domain);
 
-    public static BuildingTypeEntity toBuildingTypeEntity(BuildingType domain) {
-        if (domain == null) return null;
-        return switch (domain) {
-            case RESIDENTIAL -> BuildingTypeEntity.RESIDENTIAL;
-            case OFFICE -> BuildingTypeEntity.OFFICE;
-            case INDUSTRIAL -> BuildingTypeEntity.INDUSTRIAL;
-        };
-    }
+    BuildingType toBuildingType(BuildingTypeEntity entity);
 
-    public static BuildingType toBuildingType(BuildingTypeEntity entity) {
-        if (entity == null) return null;
-        return switch (entity) {
-            case RESIDENTIAL -> BuildingType.RESIDENTIAL;
-            case OFFICE -> BuildingType.OFFICE;
-            case INDUSTRIAL -> BuildingType.INDUSTRIAL;
-        };
-    }
+    ClientTypeEntity toClientTypeEntity(ClientType domain);
 
-    public static ClientTypeEntity toClientTypeEntity(ClientType domain) {
-        if (domain == null) return null;
-        return switch (domain) {
-            case INDIVIDUAL -> ClientTypeEntity.INDIVIDUAL;
-            case COMPANY -> ClientTypeEntity.COMPANY;
-        };
-    }
+    ClientType toClientType(ClientTypeEntity entity);
 
-    public static ClientType toClientType(ClientTypeEntity entity) {
-        if (entity == null) return null;
-        return switch (entity) {
-            case INDIVIDUAL -> ClientType.INDIVIDUAL;
-            case COMPANY -> ClientType.COMPANY;
-        };
-    }
+    RiskLevelEntity toRiskLevelEntity(RiskLevel domain);
 
-    public static RiskLevelEntity toRiskLevelEntity(RiskLevel domain) {
-        if (domain == null) return null;
-        return switch (domain) {
-            case COUNTRY -> RiskLevelEntity.COUNTRY;
-            case COUNTY -> RiskLevelEntity.COUNTY;
-            case CITY -> RiskLevelEntity.CITY;
-            case BUILDING_TYPE -> RiskLevelEntity.BUILDING_TYPE;
-        };
-    }
+    RiskLevel toRiskLevel(RiskLevelEntity entity);
 
-    public static RiskLevel toRiskLevel(RiskLevelEntity entity) {
-        if (entity == null) return null;
-        return switch (entity) {
-            case COUNTRY -> RiskLevel.COUNTRY;
-            case COUNTY -> RiskLevel.COUNTY;
-            case CITY -> RiskLevel.CITY;
-            case BUILDING_TYPE -> RiskLevel.BUILDING_TYPE;
-        };
-    }
+    FeeConfigTypeEntity toFeeConfigTypeEntity(FeeConfigurationType domain);
 
-    public static FeeConfigTypeEntity toFeeConfigTypeEntity(FeeConfigurationType domain) {
-        if (domain == null) return null;
-        return switch (domain) {
-            case BROKER_COMMISSION -> FeeConfigTypeEntity.BROKER_COMMISSION;
-            case RISK_ADJUSTMENT -> FeeConfigTypeEntity.RISK_ADJUSTMENT;
-            case ADMIN_FEE -> FeeConfigTypeEntity.ADMIN_FEE;
-        };
-    }
+    FeeConfigurationType toFeeConfigurationType(FeeConfigTypeEntity entity);
 
-    public static FeeConfigurationType toFeeConfigurationType(FeeConfigTypeEntity entity) {
-        if (entity == null) return null;
-        return switch (entity) {
-            case BROKER_COMMISSION -> FeeConfigurationType.BROKER_COMMISSION;
-            case RISK_ADJUSTMENT -> FeeConfigurationType.RISK_ADJUSTMENT;
-            case ADMIN_FEE -> FeeConfigurationType.ADMIN_FEE;
-        };
-    }
+    PolicyStatusEntity toPolicyStatusEntity(PolicyStatus domain);
 
-    public static PolicyStatusEntity toPolicyStatusEntity(PolicyStatus domain) {
-        if (domain == null) return null;
-        return switch (domain) {
-            case DRAFT -> PolicyStatusEntity.DRAFT;
-            case ACTIVE -> PolicyStatusEntity.ACTIVE;
-            case EXPIRED -> PolicyStatusEntity.EXPIRED;
-            case CANCELLED -> PolicyStatusEntity.CANCELLED;
-        };
-    }
+    PolicyStatus toPolicyStatus(PolicyStatusEntity entity);
 }

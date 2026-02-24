@@ -13,10 +13,15 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
-import static com.example.insurance_app.application.mapper.EnumDtoMapper.toBuildingType;
-
 @Component
 public class BuildingRequestMapper {
+
+    private final EnumDtoMapper enumDtoMapper;
+
+    public BuildingRequestMapper(EnumDtoMapper enumDtoMapper) {
+        this.enumDtoMapper = enumDtoMapper;
+    }
+
     public Building toDomain(UUID ownerId, UUID cityId, CreateBuildingRequest request) {
         if (request == null) return null;
 
@@ -39,7 +44,7 @@ public class BuildingRequestMapper {
 
         return new BuildingInfo(
                 dto.constructionYear(),
-                toBuildingType(dto.buildingType()),
+                enumDtoMapper.toBuildingType(dto.buildingType()),
                 dto.numberOfFloors(),
                 dto.surfaceArea(),
                 dto.insuredValue()

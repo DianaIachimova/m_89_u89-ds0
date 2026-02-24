@@ -14,17 +14,23 @@ import com.example.insurance_app.infrastructure.persistence.entity.geography.Cou
 import com.example.insurance_app.infrastructure.persistence.entity.geography.CountyEntity;
 import org.springframework.stereotype.Component;
 
-import static com.example.insurance_app.application.mapper.EnumDtoMapper.toBuildingTypeDto;
-
 @Component
 public class BuildingResponseMapper {
+
+    private final EnumDtoMapper enumDtoMapper;
+    private final GeographyMapper geographyMapper;
+
+    public BuildingResponseMapper(EnumDtoMapper enumDtoMapper, GeographyMapper geographyMapper) {
+        this.enumDtoMapper = enumDtoMapper;
+        this.geographyMapper = geographyMapper;
+    }
 
     public BuildingSummaryResponse toSummaryResponse(Building domain, CityEntity cityEntity) {
         if (domain == null) return null;
 
         return new BuildingSummaryResponse(
                 domain.getId().value(),
-                toAddressSummary(domain.getAddress(), toCityResponse(cityEntity)),
+                toAddressSummary(domain.getAddress(), geographyMapper.toDto(cityEntity)),
                 toBuildingInfoResponse(domain.getBuildingInfo()),
                 toRiskIndicatorsDto(domain.getRiskIndicators())
         );
@@ -43,9 +49,9 @@ public class BuildingResponseMapper {
                 domain.getOwnerId().value(),
                 toAddressDetailed(
                         domain.getAddress(),
-                        toCityResponse(city),
-                        toCountyResponse(county),
-                        toCountryResponse(country)),
+                        geographyMapper.toDto(city),
+                        geographyMapper.toDto(county),
+                        geographyMapper.toDto(country)),
                 toBuildingInfoResponse(domain.getBuildingInfo()),
                 toRiskIndicatorsDto(domain.getRiskIndicators())
         );
@@ -74,7 +80,7 @@ public class BuildingResponseMapper {
         }
         return new BuildingInfoResponse(
                 domain.constructionYear(),
-                toBuildingTypeDto(domain.type()),
+                enumDtoMapper.toBuildingTypeDto(domain.type()),
                 domain.numberOfFloors(),
                 domain.surfaceArea(),
                 domain.insuredValue()
@@ -92,18 +98,4 @@ public class BuildingResponseMapper {
         );
     }
 
-    public CityResponse toCityResponse(CityEntity city) {
-        if (city == null) return null;
-        return new CityResponse(city.getId(), city.getName());
-    }
-
-    public CountyResponse toCountyResponse(CountyEntity county) {
-        if (county == null) return null;
-        return new CountyResponse(county.getId(), county.getName(), county.getCode());
-    }
-
-    public CountryResponse toCountryResponse(CountryEntity country) {
-        if (country == null) return null;
-        return new CountryResponse(country.getId(), country.getName());
-    }
 }

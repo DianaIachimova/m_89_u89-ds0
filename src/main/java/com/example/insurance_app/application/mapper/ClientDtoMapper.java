@@ -16,18 +16,24 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-import static com.example.insurance_app.application.mapper.EnumDtoMapper.toClientType;
-import static com.example.insurance_app.application.mapper.EnumDtoMapper.toClientTypeDto;
-
 @Component
 public class ClientDtoMapper {
+
+    private final EnumDtoMapper enumDtoMapper;
+    private final IdentificationNumberChangeMapper identificationNumberChangeMapper;
+
+    public ClientDtoMapper(EnumDtoMapper enumDtoMapper,
+                          IdentificationNumberChangeMapper identificationNumberChangeMapper) {
+        this.enumDtoMapper = enumDtoMapper;
+        this.identificationNumberChangeMapper = identificationNumberChangeMapper;
+    }
 
     public Client toDomain(CreateClientRequest request) {
         if (request == null) {
             return null;
         }
 
-        ClientType clientType = toClientType(request.clientType());
+        ClientType clientType = enumDtoMapper.toClientType(request.clientType());
         ContactInfo contactInfo = toContactInfo(request.contactInfo());
         Address address = request.address() != null ? toAddress(request.address()) : null;
 
@@ -46,12 +52,12 @@ public class ClientDtoMapper {
         }
 
         List<IdentificationNumberChangeDto> historyDto = history != null
-                ? history.stream().map(this::toHistoryDto).toList()
+                ? history.stream().map(identificationNumberChangeMapper::toDto).toList()
                 : List.of();
 
         return new ClientResponse(
                 domain.getId() != null ? domain.getId().value() : null,
-                toClientTypeDto(domain.getClientType()),
+                enumDtoMapper.toClientTypeDto(domain.getClientType()),
                 domain.getName(),
                 domain.getIdentificationNumber(),
                 toContactInfoResponse(domain.getContactInfo()),
@@ -70,7 +76,7 @@ public class ClientDtoMapper {
 
         return new ClientRefResponse(
                 domain.getId() != null ? domain.getId().value() : null,
-                toClientTypeDto(domain.getClientType()),
+                enumDtoMapper.toClientTypeDto(domain.getClientType()),
                 domain.getName(),
                 domain.getIdentificationNumber(),
                 toContactInfoResponse(domain.getContactInfo()),
@@ -124,14 +130,4 @@ public class ClientDtoMapper {
         );
     }
 
-    private IdentificationNumberChangeDto toHistoryDto(IdentificationNumberChangeEntity entity) {
-        if (entity == null) {
-            return null;
-        }
-        return new IdentificationNumberChangeDto(
-                entity.getChangedAt(),
-                entity.getChangedBy(),
-                entity.getReason()
-        );
-    }
 }

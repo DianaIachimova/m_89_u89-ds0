@@ -8,20 +8,24 @@ import com.example.insurance_app.domain.model.metadata.riskfactors.vo.RiskTarget
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.riskfactors.RiskFactorConfigurationEntity;
 import org.springframework.stereotype.Component;
 
-import static com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper.*;
-
-
 @Component
 public class RiskFactorEntityMapper {
+
+    private final EnumEntityMapper enumEntityMapper;
+
+    public RiskFactorEntityMapper(EnumEntityMapper enumEntityMapper) {
+        this.enumEntityMapper = enumEntityMapper;
+    }
+
     public RiskFactorConfiguration toDomain(RiskFactorConfigurationEntity entity) {
         if (entity == null) {
             return null;
         }
 
         RiskTarget target = new RiskTarget(
-                toRiskLevel(entity.getLevel()),
+                enumEntityMapper.toRiskLevel(entity.getLevel()),
                 entity.getReferenceId(),
-                toBuildingType(entity.getBuildingType())
+                enumEntityMapper.toBuildingType(entity.getBuildingType())
         );
 
         return RiskFactorConfiguration.rehydrate(
@@ -40,9 +44,9 @@ public class RiskFactorEntityMapper {
 
         return new RiskFactorConfigurationEntity(
                 null,
-                toRiskLevelEntity(domain.getTarget().level()),
+                enumEntityMapper.toRiskLevelEntity(domain.getTarget().level()),
                 domain.getTarget().referenceId(),
-                toBuildingTypeEntity(domain.getTarget().buildingType()),
+                enumEntityMapper.toBuildingTypeEntity(domain.getTarget().buildingType()),
                 domain.getPercentage().value(),
                 domain.isActive()
         );

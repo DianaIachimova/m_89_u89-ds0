@@ -13,17 +13,17 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper.toBuildingTypeEntity;
-import static com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper.toPolicyStatusEntity;
-
 @Repository
 public class PolicyReportRepository {
 
     private static final String POLICY_DETAILS = "policyDetails";
     private final EntityManager entityManager;
+    private final com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper enumEntityMapper;
 
-    public PolicyReportRepository(EntityManager entityManager) {
+    public PolicyReportRepository(EntityManager entityManager,
+                                  com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper enumEntityMapper) {
         this.entityManager = entityManager;
+        this.enumEntityMapper = enumEntityMapper;
     }
 
     public List<PolicyReportProjection> generateReport(PolicyReportQuery query) {
@@ -78,7 +78,7 @@ public class PolicyReportRepository {
         predicates.add(cb.lessThanOrEqualTo(policy.get(POLICY_DETAILS).get("endDate"), query.to()));
 
         if (query.status() != null) {
-            predicates.add(cb.equal(policy.get("status"), toPolicyStatusEntity(query.status())));
+            predicates.add(cb.equal(policy.get("status"), enumEntityMapper.toPolicyStatusEntity(query.status())));
         }
 
         if (query.currency() != null) {
@@ -86,7 +86,7 @@ public class PolicyReportRepository {
         }
 
         if (query.buildingType() != null) {
-            predicates.add(cb.equal(building.get("buildingInfo").get("buildingType"), toBuildingTypeEntity(query.buildingType())));
+            predicates.add(cb.equal(building.get("buildingInfo").get("buildingType"), enumEntityMapper.toBuildingTypeEntity(query.buildingType())));
         }
 
         return predicates;

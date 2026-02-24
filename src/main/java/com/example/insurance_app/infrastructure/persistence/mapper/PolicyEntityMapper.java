@@ -20,6 +20,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class PolicyEntityMapper {
 
+    private final EnumEntityMapper enumEntityMapper;
+
+    public PolicyEntityMapper(EnumEntityMapper enumEntityMapper) {
+        this.enumEntityMapper = enumEntityMapper;
+    }
+
     public Policy toDomain(PolicyEntity entity) {
         if (entity == null) return null;
 
@@ -46,7 +52,7 @@ public class PolicyEntityMapper {
         return Policy.rehydrate(
                 identity,
                 refs,
-                toDomainStatus(entity.getStatus()),
+                enumEntityMapper.toPolicyStatus(entity.getStatus()),
                 new PolicyPeriod(details.getStartDate(), details.getEndDate()),
                 premium,
                 cancellation,
@@ -73,7 +79,7 @@ public class PolicyEntityMapper {
         return new PolicyEntity(
                 domain.getPolicyNumber().value(),
                 client, building, broker, currency,
-                toEntityStatus(domain.getStatus()),
+                enumEntityMapper.toPolicyStatusEntity(domain.getStatus()),
                 details);
     }
 
@@ -81,7 +87,7 @@ public class PolicyEntityMapper {
     public void updateEntity(Policy domain, PolicyEntity entity) {
         if (domain == null || entity == null) return;
 
-        entity.setStatus(toEntityStatus(domain.getStatus()));
+        entity.setStatus(enumEntityMapper.toPolicyStatusEntity(domain.getStatus()));
         PolicyDetailsEmbeddable details = entity.getPolicyDetails();
         details.setFinalPremium(domain.getFinalPremium().value());
 
@@ -91,21 +97,4 @@ public class PolicyEntityMapper {
         }
     }
 
-    private PolicyStatus toDomainStatus(PolicyStatusEntity entity) {
-        return switch (entity) {
-            case DRAFT -> PolicyStatus.DRAFT;
-            case ACTIVE -> PolicyStatus.ACTIVE;
-            case EXPIRED -> PolicyStatus.EXPIRED;
-            case CANCELLED -> PolicyStatus.CANCELLED;
-        };
-    }
-
-    private PolicyStatusEntity toEntityStatus(PolicyStatus domain) {
-        return switch (domain) {
-            case DRAFT -> PolicyStatusEntity.DRAFT;
-            case ACTIVE -> PolicyStatusEntity.ACTIVE;
-            case EXPIRED -> PolicyStatusEntity.EXPIRED;
-            case CANCELLED -> PolicyStatusEntity.CANCELLED;
-        };
-    }
 }

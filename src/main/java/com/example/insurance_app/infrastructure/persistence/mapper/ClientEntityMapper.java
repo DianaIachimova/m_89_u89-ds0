@@ -12,11 +12,14 @@ import com.example.insurance_app.infrastructure.persistence.entity.client.Client
 import com.example.insurance_app.infrastructure.persistence.entity.client.ContactInfoEmbeddable;
 import org.springframework.stereotype.Component;
 
-import static com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper.toClientType;
-import static com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper.toClientTypeEntity;
-
 @Component
 public class ClientEntityMapper {
+
+    private final EnumEntityMapper enumEntityMapper;
+
+    public ClientEntityMapper(EnumEntityMapper enumEntityMapper) {
+        this.enumEntityMapper = enumEntityMapper;
+    }
 
     public Client toDomain(ClientEntity entity) {
         if (entity == null) {
@@ -24,7 +27,7 @@ public class ClientEntityMapper {
         }
 
         ClientId clientId = entity.getId() != null ? new ClientId(entity.getId()) : null;
-        ClientType clientType = toClientType(entity.getClientType());
+        ClientType clientType = enumEntityMapper.toClientType(entity.getClientType());
         ContactInfo contactInfo = toContactInfo(entity.getContactInfo());
         Address address = toAddress(entity.getAddress());
 
@@ -45,7 +48,7 @@ public class ClientEntityMapper {
 
         return new ClientEntity(
                 domain.getId() != null ? domain.getId().value() : null,
-                toClientTypeEntity(domain.getClientType()),
+                enumEntityMapper.toClientTypeEntity(domain.getClientType()),
                 domain.getName(),
                 domain.getIdentificationNumber(),
                 toContactInfoEmbeddable(domain.getContactInfo()),

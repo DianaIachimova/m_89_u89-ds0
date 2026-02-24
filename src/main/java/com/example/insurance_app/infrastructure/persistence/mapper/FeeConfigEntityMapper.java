@@ -8,11 +8,14 @@ import com.example.insurance_app.infrastructure.persistence.entity.metadata.feec
 import com.example.insurance_app.infrastructure.persistence.entity.metadata.feeconfig.ValidityPeriodEmbeddable;
 import org.springframework.stereotype.Component;
 
-import static com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper.toFeeConfigTypeEntity;
-import static com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper.toFeeConfigurationType;
-
 @Component
 public class FeeConfigEntityMapper {
+
+    private final EnumEntityMapper enumEntityMapper;
+
+    public FeeConfigEntityMapper(EnumEntityMapper enumEntityMapper) {
+        this.enumEntityMapper = enumEntityMapper;
+    }
 
     public FeeConfiguration toDomain(FeeConfigurationEntity entity) {
         if (entity == null) {
@@ -21,7 +24,7 @@ public class FeeConfigEntityMapper {
         FeeDetails details = new FeeDetails(
                 FeeCode.of(entity.getCode()),
                 FeeName.of(entity.getName()),
-                toFeeConfigurationType(entity.getType()),
+                enumEntityMapper.toFeeConfigurationType(entity.getType()),
                 FeePercentage.of(entity.getPercentage()),
                 toEffectivePeriod(entity.getPeriod())
         );
@@ -40,7 +43,7 @@ public class FeeConfigEntityMapper {
                 null,
                 domain.getDetails().code().value(),
                 domain.getDetails().name().value(),
-                toFeeConfigTypeEntity(domain.getDetails().type()),
+                enumEntityMapper.toFeeConfigTypeEntity(domain.getDetails().type()),
                 domain.getDetails().percentage().value(),
                 toValidityPeriodEmbeddable(domain.getDetails().period()),
                 domain.isActive()

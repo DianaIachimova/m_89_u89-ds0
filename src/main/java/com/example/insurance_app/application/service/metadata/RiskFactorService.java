@@ -31,9 +31,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Objects;
 import java.util.UUID;
 
-import static com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper.toBuildingTypeEntity;
-import static com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper.toRiskLevelEntity;
-
 @Service
 public class RiskFactorService {
     private static final Logger logger = LoggerFactory.getLogger(RiskFactorService.class);
@@ -41,6 +38,7 @@ public class RiskFactorService {
     private final RiskFactorConfigRepository riskFactorRepository;
     private final RiskFactorEntityMapper entityMapper;
     private final RiskFactorDtoMapper dtoMapper;
+    private final com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper enumEntityMapper;
     private final CountryRepository countryRepository;
     private final CountyRepository countyRepository;
     private final CityRepository cityRepository;
@@ -48,12 +46,14 @@ public class RiskFactorService {
     public RiskFactorService(RiskFactorConfigRepository riskFactorRepository,
                              RiskFactorEntityMapper entityMapper,
                              RiskFactorDtoMapper dtoMapper,
+                             com.example.insurance_app.infrastructure.persistence.mapper.EnumEntityMapper enumEntityMapper,
                              CountryRepository countryRepository,
                              CountyRepository countyRepository,
                              CityRepository cityRepository) {
         this.riskFactorRepository = riskFactorRepository;
         this.entityMapper = entityMapper;
         this.dtoMapper = dtoMapper;
+        this.enumEntityMapper = enumEntityMapper;
         this.countryRepository = countryRepository;
         this.countyRepository = countyRepository;
         this.cityRepository = cityRepository;
@@ -154,13 +154,13 @@ public class RiskFactorService {
         boolean conflict;
         if (target.level() == RiskLevel.BUILDING_TYPE) {
             conflict = riskFactorRepository.existsByLevelAndBuildingTypeAndActiveTrue(
-                    toRiskLevelEntity(target.level()),
-                    toBuildingTypeEntity(target.buildingType())
+                    enumEntityMapper.toRiskLevelEntity(target.level()),
+                    enumEntityMapper.toBuildingTypeEntity(target.buildingType())
             );
         }
         else {
             conflict = riskFactorRepository.existsByLevelAndReferenceIdAndActiveTrue(
-                    toRiskLevelEntity(target.level()),
+                    enumEntityMapper.toRiskLevelEntity(target.level()),
                     target.referenceId()
             );
         }
