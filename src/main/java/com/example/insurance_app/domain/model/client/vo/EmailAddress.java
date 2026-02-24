@@ -9,7 +9,7 @@ public record EmailAddress(String value) {
 
         DomainAssertions.check(v.length() <= 100, "Invalid email length");
         DomainAssertions.check(
-                v.matches("^[^@\\s]++@[^@\\s]++\\.[^@\\s]++$"),
+                v.matches("^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,253}\\.[A-Za-z]{2,63}$"),
                 "Invalid email format");
 
         value = v;
